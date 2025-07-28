@@ -23,10 +23,10 @@ const Navigation = () => {
             <div className="bg-gradient-primary p-2 rounded-xl shadow-soft">
               <BookOpen className="h-6 w-6 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-primary">StudyStar</h1>
-              <p className="text-xs text-muted-foreground">Exam Hub</p>
-            </div>
+          <div>
+            <h1 className="text-lg font-bold text-primary">NTexam</h1>
+            <p className="text-xs text-muted-foreground">National Talent Exam</p>
+          </div>
           </div>
 
           {/* Desktop Navigation */}
@@ -51,7 +51,7 @@ const Navigation = () => {
               Login
             </Button>
             <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-              Register
+              <a href="/registration">Register</a>
             </Button>
           </div>
 

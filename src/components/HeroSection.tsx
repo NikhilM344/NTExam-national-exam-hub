@@ -38,9 +38,9 @@ const HeroSection = () => {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-warning to-accent bg-clip-text text-transparent">
-                StudyStar
+                NTexam
               </span>{' '}
-              Exam Hub
+              National Talent Exam
             </h1>
             <p className="text-xl sm:text-2xl text-white/90 font-medium">
               Your Gateway to Academic Excellence
