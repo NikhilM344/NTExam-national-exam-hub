@@ -51,9 +51,9 @@ const Payment = () => {
       localStorage.removeItem('registrationData');
       localStorage.removeItem('examFees');
 
-      // Redirect to dashboard
+      // Redirect to homepage
       setTimeout(() => {
-        window.location.href = '/student-dashboard';
+        window.location.href = '/';
       }, 2000);
     }, 3000);
   };

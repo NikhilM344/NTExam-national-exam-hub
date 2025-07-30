@@ -1,9 +1,74 @@
-import { useState } from 'react';
-import { Menu, X, BookOpen, Trophy, Calendar, Phone, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, X, BookOpen, Trophy, Calendar, Phone, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [studentData, setStudentData] = useState<any>(null);
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const loginData = localStorage.getItem('studentLogin');
+    if (loginData) {
+      const parsed = JSON.parse(loginData);
+      if (parsed.isLoggedIn) {
+        setIsLoggedIn(true);
+        setStudentData(parsed.studentData);
+      }
+    }
+  }, []);
+
+  const handleLogin = () => {
+    // Simulate login validation (frontend only)
+    if (loginForm.email && loginForm.password) {
+      // Store login state
+      const loginData = {
+        email: loginForm.email,
+        password: loginForm.password,
+        isLoggedIn: true,
+        studentData: { personalInfo: { email: loginForm.email, fullName: 'Student User' } }
+      };
+      localStorage.setItem('studentLogin', JSON.stringify(loginData));
+      
+      setIsLoggedIn(true);
+      setStudentData(loginData.studentData);
+      setIsLoginOpen(false);
+      setLoginForm({ email: '', password: '' });
+      
+      toast({
+        title: "Login Successful!",
+        description: "Welcome back! You can now access your dashboard.",
+      });
+    } else {
+      toast({
+        title: "Login Failed",
+        description: "Please enter both email and password.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('studentLogin');
+    setIsLoggedIn(false);
+    setStudentData(null);
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
+  const handleDashboard = () => {
+    window.location.href = '/student-dashboard';
+  };
 
   const navItems = [
     { label: 'Home', href: '#home', icon: BookOpen },
@@ -44,15 +109,67 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Login/Register Buttons */}
+          {/* Login/Register/Dashboard Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-            <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-              <a href="/registration">Register</a>
-            </Button>
+            {isLoggedIn ? (
+              <>
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-primary hover:opacity-90"
+                  onClick={handleDashboard}
+                >
+                  Dashboard
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Student Login</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={loginForm.email}
+                          onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="Enter your email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          value={loginForm.password}
+                          onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                          placeholder="Enter your password"
+                        />
+                      </div>
+                      <Button onClick={handleLogin} className="w-full">
+                        Login
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button size="sm" className="bg-gradient-primary hover:opacity-90">
+                  <a href="/registration">Register</a>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -87,13 +204,35 @@ const Navigation = () => {
                 </a>
               ))}
               <div className="pt-4 space-y-2">
-                <Button variant="outline" size="sm" className="w-full">
-                  <User className="h-4 w-4 mr-2" />
-                  Login
-                </Button>
-                <Button size="sm" className="w-full bg-gradient-primary hover:opacity-90">
-                  Register
-                </Button>
+                {isLoggedIn ? (
+                  <>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-primary hover:opacity-90"
+                      onClick={handleDashboard}
+                    >
+                      Dashboard
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <User className="h-4 w-4 mr-2" />
+                          Login
+                        </Button>
+                      </DialogTrigger>
+                    </Dialog>
+                    <Button size="sm" className="w-full bg-gradient-primary hover:opacity-90">
+                      <a href="/registration">Register</a>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
