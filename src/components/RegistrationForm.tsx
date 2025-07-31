@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useLoadingContext } from '@/context/LoadingContext';
 import PersonalInfoStep from './registration/PersonalInfo';
 import SchoolInfoStep from './registration/SchoolInfo';
 import ExamDetailsStep from './registration/ExamDetails';
@@ -14,6 +15,7 @@ const RegistrationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { startLoading, stopLoading } = useLoadingContext();
 
   const [formData, setFormData] = useState<RegistrationData>({
     personalInfo: {
@@ -126,6 +128,7 @@ const RegistrationForm = () => {
     }
 
     setIsSubmitting(true);
+    startLoading("Processing your registration...");
 
     // Generate password from date of birth
     const password = generatePassword(formData.personalInfo.dateOfBirth);
@@ -138,6 +141,9 @@ const RegistrationForm = () => {
 
     // Simulate API call
     setTimeout(() => {
+      stopLoading();
+      setIsSubmitting(false);
+      
       toast({
         title: "Registration Successful!",
         description: `Your registration has been submitted. Redirecting to payment (₹${fees})...`,
@@ -147,8 +153,11 @@ const RegistrationForm = () => {
       localStorage.setItem('registrationData', JSON.stringify(completeFormData));
       localStorage.setItem('examFees', fees.toString());
 
-      // Redirect to payment page
-      window.location.href = '/payment';
+      // Small delay before redirect to show success message
+      setTimeout(() => {
+        startLoading("Redirecting to payment...");
+        window.location.href = '/payment';
+      }, 1500);
     }, 2000);
   };
 

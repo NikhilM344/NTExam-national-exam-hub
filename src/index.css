@@ -68,6 +68,10 @@ All colors MUST be HSL and designed for children/students
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* Book Loader Animation Variables */
+    --book-flip-duration: 2s;
+    --page-fold-duration: 2s;
 
     --radius: 1rem;
 
@@ -134,5 +138,55 @@ All colors MUST be HSL and designed for children/students
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Book Loader Global Styles */
+@layer components {
+  .book-loader {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    animation: book-flip var(--book-flip-duration) infinite ease-in-out;
+  }
+  
+  .page-fold {
+    animation: page-fold var(--page-fold-duration) infinite ease-in-out;
+    transform-origin: left center;
+  }
+  
+  @keyframes book-flip {
+    0%, 20% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+    25%, 45% { 
+      transform: rotateY(-25deg) rotateX(10deg) translateZ(10px); 
+    }
+    50%, 70% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+    75%, 95% { 
+      transform: rotateY(25deg) rotateX(-10deg) translateZ(10px); 
+    }
+    100% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+  }
+  
+  @keyframes page-fold {
+    0%, 20% { 
+      transform: rotateY(0deg); 
+    }
+    25%, 45% { 
+      transform: rotateY(-15deg); 
+    }
+    50%, 70% { 
+      transform: rotateY(0deg); 
+    }
+    75%, 95% { 
+      transform: rotateY(15deg); 
+    }
+    100% { 
+      transform: rotateY(0deg); 
+    }
   }
 }
