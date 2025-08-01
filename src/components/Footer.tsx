@@ -5,13 +5,13 @@ const Footer = () => {
 
   const footerSections = [
     {
-      title: "Quick Links",
+      title: "Quick Navigation",
       links: [
-        { name: "Home", href: "#home" },
-        { name: "About Us", href: "#about" },
-        { name: "Syllabus & Sample Papers", href: "#syllabus" },
-        { name: "Exam Calendar", href: "#calendar" },
-        { name: "Achievers & Winners", href: "#achievers" },
+        { name: "Home - NTexam Platform", href: "#home" },
+        { name: "About NTexam", href: "#about" },
+        { name: "Exam Syllabus & Study Materials", href: "#syllabus" },
+        { name: "Exam Calendar & Schedule", href: "#calendar" },
+        { name: "Top Performers & Winners", href: "#achievers" },
       ]
     },
     {
@@ -44,25 +44,25 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-foreground text-white">
+    <footer className="bg-foreground text-white" itemScope itemType="https://schema.org/WPFooter">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8">
           {/* Logo and Description */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2" itemScope itemType="https://schema.org/Organization">
             <div className="flex items-center space-x-2 mb-4">
               <div className="bg-gradient-primary p-2 rounded-xl shadow-soft">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">NTexam</h1>
-                <p className="text-sm text-white/80">National Talent Exam</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white" itemProp="name">NTexam</h1>
+                <p className="text-xs sm:text-sm text-white/80" itemProp="description">National Talent Exam Platform</p>
               </div>
             </div>
             
-            <p className="text-white/80 leading-relaxed mb-4 max-w-md">
-              Empowering students across India with comprehensive exam preparation, 
-              quality study materials, and a platform to showcase their academic excellence through NTexam.
+            <p className="text-sm sm:text-base text-white/80 leading-relaxed mb-4 max-w-md">
+              India's premier online competitive exam platform empowering 50,000+ students across the nation. 
+              Join us for comprehensive exam preparation, expert study materials, and academic excellence.
             </p>
 
             {/* Contact Info */}

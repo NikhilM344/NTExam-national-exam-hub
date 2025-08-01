@@ -73,22 +73,22 @@ const WinnersSection = () => {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background" id="winners" itemScope itemType="https://schema.org/Person">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Trophy className="h-8 w-8 text-warning" />
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
-              NTexam Winners & Achievers
+        <header className="text-center mb-8 sm:mb-12">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-warning" />
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground" itemProp="name">
+              NTexam Top Performers & Academic Champions
             </h2>
-            <Crown className="h-8 w-8 text-accent" />
+            <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Celebrating the brilliant minds who achieved excellence in our competitive exams. 
-            These young achievers inspire thousands of students across the nation.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
+            Meet our exceptional students who achieved academic excellence in competitive exams. 
+            These inspiring young minds represent the future leaders of India and motivate thousands of students nationwide.
           </p>
-        </div>
+        </header>
 
         {/* Winners Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

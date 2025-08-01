@@ -47,18 +47,18 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
+    <section id="contact" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background" itemScope itemType="https://schema.org/ContactPage">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Get in Touch with Us
+        <header className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4" itemProp="name">
+            Contact NTexam Support Team
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have questions about our exams or need support? We're here to help! 
-            Send us a message and our team will respond promptly.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
+            Need assistance with exam registration, technical support, or have questions about our competitive exam platform? 
+            Our dedicated support team is here to help you succeed. Get in touch and we'll respond within 24 hours.
           </p>
-        </div>
+        </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}

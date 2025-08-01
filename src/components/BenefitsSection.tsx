@@ -5,8 +5,8 @@ const BenefitsSection = () => {
   const benefits = [
     {
       icon: Brain,
-      title: "Enhanced Learning",
-      description: "Develop critical thinking and problem-solving skills through challenging exam questions",
+      title: "Enhanced Learning & Critical Thinking",
+      description: "Develop analytical skills and problem-solving abilities through expertly designed competitive exam questions and practice tests",
       color: "from-blue-400 to-purple-500"
     },
     {
@@ -49,28 +49,31 @@ const BenefitsSection = () => {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
+    <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-muted/30" id="benefits" itemScope itemType="https://schema.org/Service">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Benefits of Participating in the{' '}
+        <header className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4" itemProp="name">
+            Why Choose{' '}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               NTexam
             </span>
+            {' '}for Competitive Exam Preparation?
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Join our comprehensive exam platform and unlock your potential. Experience the 
-            advantages that have helped thousands of students achieve academic excellence.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
+            Discover the comprehensive benefits and advantages of India's leading online competitive exam platform. 
+            Join over 50,000+ students who have already transformed their academic journey with NTexam.
           </p>
-        </div>
+        </header>
 
         {/* Benefits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-12 sm:mb-16">
           {benefits.map((benefit, index) => (
             <Card 
               key={index} 
-              className="relative overflow-hidden shadow-card hover:shadow-winner transition-all duration-500 hover:scale-105 bg-gradient-card border-0 group"
+              className="relative overflow-hidden shadow-card hover:shadow-winner transition-all duration-500 hover:scale-[1.02] sm:hover:scale-105 bg-gradient-card border-0 group"
+              itemScope 
+              itemType="https://schema.org/Service"
             >
               <CardContent className="p-6">
                 {/* Icon */}

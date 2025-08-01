@@ -80,18 +80,18 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-soft">
+    <nav className="bg-card/95 backdrop-blur-sm border-b border-border sticky top-0 z-50 shadow-soft" role="navigation" aria-label="Main navigation">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="bg-gradient-primary p-2 rounded-xl shadow-soft">
-              <BookOpen className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center space-x-2" itemScope itemType="https://schema.org/Organization">
+            <div className="bg-gradient-primary p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-soft">
+              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
             </div>
-          <div>
-            <h1 className="text-lg font-bold text-primary">NTexam</h1>
-            <p className="text-xs text-muted-foreground">National Talent Exam</p>
-          </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-primary" itemProp="name">NTexam</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block" itemProp="description">National Talent Exam</p>
+            </div>
           </div>
 
           {/* Desktop Navigation */}
