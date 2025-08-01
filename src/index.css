@@ -55,7 +55,7 @@ All colors MUST be HSL and designed for children/students
     --ring: 217 91% 60%;
 
     /* Student-friendly gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(268 83% 75%), hsl(320 85% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 25% 15%), hsl(225 20% 25%), hsl(230 15% 20%));
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 96%));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
