@@ -69,15 +69,15 @@ const Footer = () => {
             <div className="space-y-2 text-sm text-white/70">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>info@ntexam.in</span>
+                <span>noreply@ntexam.in</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>+91 9876543210</span>
+                <span>+919426060635</span>
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>New Delhi, India</span>
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span>305, 3rd floor flamingo, Sargasan, Gandhinagar, Gujarat 382421</span>
               </div>
             </div>
 
@@ -147,7 +147,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-white/70 text-center md:text-left">
-              © {currentYear} NTexam - National Talent Exam. All rights reserved.
+              © {currentYear} National Talent Exam. All rights reserved.
             </div>
             
             <div className="flex items-center gap-1 text-sm text-white/70">

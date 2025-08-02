@@ -4,7 +4,6 @@ import ClassExamsSection from '@/components/ClassExamsSection';
 import WinnersSection from '@/components/WinnersSection';
 import BenefitsSection from '@/components/BenefitsSection';
 import ContactSection from '@/components/ContactSection';
-import BlogsSection from '@/components/BlogsSection';
 import Footer from '@/components/Footer';
 
 const Index = () => {
@@ -16,7 +15,6 @@ const Index = () => {
       <WinnersSection />
       <BenefitsSection />
       <ContactSection />
-      <BlogsSection />
       <Footer />
     </div>
   );
