@@ -149,12 +149,6 @@ const Footer = () => {
             <div className="text-sm text-white/70 text-center md:text-left">
               © {currentYear} National Talent Exam. All rights reserved.
             </div>
-            
-            <div className="flex items-center gap-1 text-sm text-white/70">
-              <span>Made with</span>
-              <Heart className="h-4 w-4 text-red-400 fill-current" />
-              <span>for students across India</span>
-            </div>
           </div>
         </div>
       </div>
