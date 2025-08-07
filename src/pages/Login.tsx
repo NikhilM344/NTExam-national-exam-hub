@@ -149,13 +149,6 @@ const Login = () => {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="p-4 text-center">
-        <p className="text-white/60 text-xs">
-          © 2024 StudyStar Exam Hub. Secure student portal for academic excellence.
-        </p>
-      </footer>
     </div>;
 };
 export default Login;
