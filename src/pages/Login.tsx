@@ -96,9 +96,23 @@ const Login = () => {
         <p>Secure student portal for accessing exam schedules, results, and study materials. Login with your registered email and password.</p>
       </div>
 
-      {/* Navigation Header */}
+      {/* Logo Header */}
       <header className="p-4 sm:p-6">
-        <div className="container mx-auto">
+        <div className="container mx-auto flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img 
+              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" 
+              alt="National Talent Exam Logo" 
+              className="h-10 w-10 sm:h-12 sm:w-12"
+            />
+            <div className="ml-3">
+              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">NTexam</h1>
+              <p className="text-xs text-white/70 hidden sm:block">National Talent Exam</p>
+            </div>
+          </div>
+          
+          {/* Back to Home */}
           <Link 
             to="/" 
             className="inline-flex items-center gap-2 text-white hover:text-accent transition-colors group"

@@ -4,8 +4,25 @@ import RegistrationForm from '@/components/RegistrationForm';
 const Registration = () => {
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <div className="bg-gradient-hero text-white py-12">
+      {/* Logo Header */}
+      <div className="bg-gradient-hero text-white py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" 
+              alt="National Talent Exam Logo" 
+              className="h-12 w-12 sm:h-16 sm:w-16"
+            />
+            <div className="ml-4">
+              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">NTexam</h1>
+              <p className="text-sm text-white/70">National Talent Exam</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Main Header */}
+      <div className="bg-gradient-hero text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <BookOpen className="h-8 w-8" />
