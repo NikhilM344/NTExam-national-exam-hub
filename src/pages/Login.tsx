@@ -173,7 +173,7 @@ const Login = () => {
                     </p>
                     <Button type="button" variant="outline" onClick={handlePasswordReset} className="w-full border-primary/20 text-primary hover:bg-primary/10">
                       <Send className="w-4 h-4 mr-2" />
-                      Send Password & ID to Email
+                      Send otp to mail
                     </Button>
                     <p className="text-xs text-muted-foreground">
                       We'll send your password and student ID to your registered email address
