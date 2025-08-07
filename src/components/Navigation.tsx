@@ -84,11 +84,14 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2" itemScope itemType="https://schema.org/Organization">
-            <div className="bg-gradient-primary p-1.5 sm:p-2 rounded-lg sm:rounded-xl shadow-soft">
-              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
-            </div>
-            <div>
+          <div className="flex items-center" itemScope itemType="https://schema.org/Organization">
+            <img 
+              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" 
+              alt="National Talent Exam Logo" 
+              className="h-10 w-10 sm:h-12 sm:w-12"
+              itemProp="logo"
+            />
+            <div className="ml-3">
               <h1 className="text-base sm:text-lg font-bold text-primary" itemProp="name">NTexam</h1>
               <p className="text-xs text-muted-foreground hidden sm:block" itemProp="description">National Talent Exam</p>
             </div>
