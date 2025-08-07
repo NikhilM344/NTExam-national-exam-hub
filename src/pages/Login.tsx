@@ -8,88 +8,80 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useLoadingContext } from '@/context/LoadingContext';
 import { Mail, Lock, BookOpen, ArrowLeft, Send } from 'lucide-react';
-
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isResetRequested, setIsResetRequested] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { startLoading, stopLoading } = useLoadingContext();
-
+  const {
+    toast
+  } = useToast();
+  const {
+    startLoading,
+    stopLoading
+  } = useLoadingContext();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email || !password) {
       toast({
         title: "Missing Information",
         description: "Please enter both email and password to continue.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     startLoading("Signing you in...");
-    
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       // Store login state in localStorage for now
       localStorage.setItem('studentLoggedIn', 'true');
       localStorage.setItem('studentEmail', email);
-      
       toast({
         title: "Welcome Back!",
-        description: "You have successfully logged into your StudyStar account.",
+        description: "You have successfully logged into your StudyStar account."
       });
-      
       navigate('/student-dashboard');
     } catch (error) {
       toast({
         title: "Login Failed",
         description: "Please check your credentials and try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       stopLoading();
     }
   };
-
   const handlePasswordReset = async () => {
     if (!email) {
       toast({
         title: "Email Required",
         description: "Please enter your email address to receive reset instructions.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     startLoading("Sending reset instructions...");
-    
     try {
       // Simulate sending reset email
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
       setIsResetRequested(true);
       toast({
         title: "Reset Instructions Sent!",
-        description: "Check your email for password and student ID reset instructions.",
+        description: "Check your email for password and student ID reset instructions."
       });
     } catch (error) {
       toast({
         title: "Reset Failed",
         description: "Unable to send reset instructions. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       stopLoading();
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-hero flex flex-col">
+  return <div className="min-h-screen bg-gradient-hero flex flex-col">
       {/* SEO-friendly header */}
       <div className="sr-only">
         <h1>StudyStar Student Login - Access Your Exam Dashboard</h1>
@@ -101,11 +93,7 @@ const Login = () => {
         <div className="container mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" 
-              alt="National Talent Exam Logo" 
-              className="h-10 w-10 sm:h-12 sm:w-12"
-            />
+            <img src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" alt="National Talent Exam Logo" className="h-10 w-10 sm:h-12 sm:w-12" />
             <div className="ml-3">
               <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">NTexam</h1>
               <p className="text-xs text-white/70 hidden sm:block">National Talent Exam</p>
@@ -113,10 +101,7 @@ const Login = () => {
           </div>
           
           {/* Back to Home */}
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 text-white hover:text-accent transition-colors group"
-          >
+          <Link to="/" className="inline-flex items-center gap-2 text-white hover:text-accent transition-colors group">
             <ArrowLeft className="h-4 w-4 group-hover:transform group-hover:-translate-x-1 transition-transform" />
             <span className="text-sm font-medium">Back to Home</span>
           </Link>
@@ -129,8 +114,8 @@ const Login = () => {
           {/* Logo/Branding */}
           <div className="text-center">
             <div className="inline-flex items-center gap-2 mb-4">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-white">StudyStar</span>
+              
+              
             </div>
             <h1 className="text-xl font-semibold text-white mb-2">Student Login</h1>
             <p className="text-white/80 text-sm">Access your exam dashboard and study materials</p>
@@ -145,8 +130,7 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!isResetRequested ? (
-                <form onSubmit={handleLogin} className="space-y-4">
+              {!isResetRequested ? <form onSubmit={handleLogin} className="space-y-4">
                   {/* Email Field */}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -154,16 +138,7 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your registered email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 bg-background border-input focus:border-primary focus:ring-primary"
-                        required
-                        aria-describedby="email-help"
-                      />
+                      <Input id="email" type="email" placeholder="Enter your registered email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="email-help" />
                     </div>
                     <p id="email-help" className="text-xs text-muted-foreground">
                       Use the email address you registered with
@@ -177,16 +152,7 @@ const Login = () => {
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 bg-background border-input focus:border-primary focus:ring-primary"
-                        required
-                        aria-describedby="password-help"
-                      />
+                      <Input id="password" type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="password-help" />
                     </div>
                     <p id="password-help" className="text-xs text-muted-foreground">
                       Enter the password provided in your welcome email
@@ -194,11 +160,7 @@ const Login = () => {
                   </div>
 
                   {/* Login Button */}
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium shadow-soft"
-                    size="lg"
-                  >
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium shadow-soft" size="lg">
                     Sign In to StudyStar
                   </Button>
 
@@ -209,12 +171,7 @@ const Login = () => {
                     <p className="text-sm text-muted-foreground">
                       Forgot your login details?
                     </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePasswordReset}
-                      className="w-full border-primary/20 text-primary hover:bg-primary/10"
-                    >
+                    <Button type="button" variant="outline" onClick={handlePasswordReset} className="w-full border-primary/20 text-primary hover:bg-primary/10">
                       <Send className="w-4 h-4 mr-2" />
                       Send Password & ID to Email
                     </Button>
@@ -222,9 +179,7 @@ const Login = () => {
                       We'll send your password and student ID to your registered email address
                     </p>
                   </div>
-                </form>
-              ) : (
-                <div className="text-center space-y-4">
+                </form> : <div className="text-center space-y-4">
                   <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
                     <Mail className="h-8 w-8 text-success mx-auto mb-2" />
                     <h3 className="font-medium text-success">Reset Instructions Sent!</h3>
@@ -233,15 +188,10 @@ const Login = () => {
                     </p>
                   </div>
                   
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsResetRequested(false)}
-                    className="w-full"
-                  >
+                  <Button variant="outline" onClick={() => setIsResetRequested(false)} className="w-full">
                     Back to Login
                   </Button>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
 
@@ -249,10 +199,7 @@ const Login = () => {
           <div className="text-center">
             <p className="text-white/70 text-sm">
               New to StudyStar?{' '}
-              <Link 
-                to="/registration" 
-                className="text-accent hover:text-accent/80 font-medium underline underline-offset-2"
-              >
+              <Link to="/registration" className="text-accent hover:text-accent/80 font-medium underline underline-offset-2">
                 Register for an exam
               </Link>
             </p>
@@ -266,8 +213,6 @@ const Login = () => {
           © 2024 StudyStar Exam Hub. Secure student portal for academic excellence.
         </p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Login;
