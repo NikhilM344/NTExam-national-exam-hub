@@ -92,7 +92,7 @@ const Navigation = () => {
               itemProp="logo"
             />
             <div className="ml-3">
-              <h1 className="text-base sm:text-lg font-bold text-primary" itemProp="name">NTexam</h1>
+              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent" itemProp="name">NTexam</h1>
               <p className="text-xs text-muted-foreground hidden sm:block" itemProp="description">National Talent Exam</p>
             </div>
           </div>

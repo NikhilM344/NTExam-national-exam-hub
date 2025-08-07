@@ -20,14 +20,14 @@ All colors MUST be HSL and designed for children/students
     --popover: 0 0% 100%;
     --popover-foreground: 215 28% 17%;
 
-    /* Primary colors - Bright blue for engagement */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 55%;
+    /* Primary colors - Deep blue/navy from logo shield */
+    --primary: 220 100% 25%;
+    --primary-foreground: 45 100% 85%;
+    --primary-hover: 220 100% 30%;
 
-    /* Secondary colors - Soft purple */
-    --secondary: 268 83% 85%;
-    --secondary-foreground: 268 70% 25%;
+    /* Secondary colors - Gold/yellow from logo sun */
+    --secondary: 45 100% 55%;
+    --secondary-foreground: 220 100% 15%;
 
     /* Success colors - Green for achievements */
     --success: 142 76% 36%;
@@ -41,9 +41,9 @@ All colors MUST be HSL and designed for children/students
     --muted: 210 20% 92%;
     --muted-foreground: 215 16% 47%;
 
-    /* Accent colors - Playful pink */
-    --accent: 320 85% 75%;
-    --accent-foreground: 320 70% 15%;
+    /* Accent colors - Warm gold accent */
+    --accent: 42 87% 65%;
+    --accent-foreground: 220 100% 15%;
 
     /* Destructive colors */
     --destructive: 0 84% 60%;
@@ -54,16 +54,16 @@ All colors MUST be HSL and designed for children/students
     --input: 210 20% 88%;
     --ring: 217 91% 60%;
 
-    /* Student-friendly gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(220 25% 15%), hsl(225 20% 25%), hsl(230 15% 20%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 96%));
+    /* Logo-inspired gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 100% 15%), hsl(220 100% 25%), hsl(220 100% 20%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(45 30% 96%));
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 25%), hsl(45 100% 55%));
 
-    /* Shadows for depth */
-    --shadow-soft: 0 4px 20px -8px hsl(217 91% 60% / 0.3);
-    --shadow-card: 0 8px 32px -12px hsl(215 28% 17% / 0.15);
-    --shadow-winner: 0 12px 40px -16px hsl(320 85% 75% / 0.4);
+    /* Logo-themed shadows */
+    --shadow-soft: 0 4px 20px -8px hsl(220 100% 25% / 0.3);
+    --shadow-card: 0 8px 32px -12px hsl(220 50% 20% / 0.15);
+    --shadow-winner: 0 12px 40px -16px hsl(45 87% 65% / 0.4);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
