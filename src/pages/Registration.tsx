@@ -14,7 +14,12 @@ const Registration = () => {
               className="h-12 w-12 sm:h-16 sm:w-16"
             />
             <div className="ml-4">
-              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">NTexam</h1>
+              <h1 className="text-xl sm:text-2xl font-bold" style={{
+                background: 'linear-gradient(135deg, #003d82 0%, #ffd700 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>NTexam</h1>
               <p className="text-sm text-white/70">National Talent Exam</p>
             </div>
           </div>
