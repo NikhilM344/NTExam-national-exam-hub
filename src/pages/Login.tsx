@@ -7,11 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useLoadingContext } from '@/context/LoadingContext';
-import { Mail, Lock, BookOpen, ArrowLeft, Send } from 'lucide-react';
+import { Mail, Lock, BookOpen, ArrowLeft } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isResetRequested, setIsResetRequested] = useState(false);
   const navigate = useNavigate();
   const {
     toast
@@ -47,34 +46,6 @@ const Login = () => {
       toast({
         title: "Login Failed",
         description: "Please check your credentials and try again.",
-        variant: "destructive"
-      });
-    } finally {
-      stopLoading();
-    }
-  };
-  const handlePasswordReset = async () => {
-    if (!email) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address to receive reset instructions.",
-        variant: "destructive"
-      });
-      return;
-    }
-    startLoading("Sending reset instructions...");
-    try {
-      // Simulate sending reset email
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsResetRequested(true);
-      toast({
-        title: "Reset Instructions Sent!",
-        description: "Check your email for password and student ID reset instructions."
-      });
-    } catch (error) {
-      toast({
-        title: "Reset Failed",
-        description: "Unable to send reset instructions. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -130,68 +101,40 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!isResetRequested ? <form onSubmit={handleLogin} className="space-y-4">
-                  {/* Email Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                      Student Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="Enter your registered email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="email-help" />
-                    </div>
-                    <p id="email-help" className="text-xs text-muted-foreground">
-                      Use the email address you registered with
-                    </p>
+              <form onSubmit={handleLogin} className="space-y-4">
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                    Student Email Address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="email" type="email" placeholder="Enter your registered email" value={email} onChange={e => setEmail(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="email-help" />
                   </div>
+                  <p id="email-help" className="text-xs text-muted-foreground">
+                    Use the email address you registered with
+                  </p>
+                </div>
 
-                  {/* Password Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="password" type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="password-help" />
-                    </div>
-                    <p id="password-help" className="text-xs text-muted-foreground">
-                      Enter the password provided in your welcome email
-                    </p>
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="password" type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 bg-background border-input focus:border-primary focus:ring-primary" required aria-describedby="password-help" />
                   </div>
+                  <p id="password-help" className="text-xs text-muted-foreground">
+                    Enter the password provided in your welcome email
+                  </p>
+                </div>
 
-                  {/* Login Button */}
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium shadow-soft" size="lg">
-                    Sign In to StudyStar
-                  </Button>
-
-                  <Separator className="my-4" />
-
-                  {/* Password Reset Option */}
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Forgot your login details?
-                    </p>
-                    <Button type="button" variant="outline" onClick={handlePasswordReset} className="w-full border-primary/20 text-primary hover:bg-primary/10">
-                      <Send className="w-4 h-4 mr-2" />
-                      Send otp to mail
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      We'll send your password and student ID to your registered email address
-                    </p>
-                  </div>
-                </form> : <div className="text-center space-y-4">
-                  <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
-                    <Mail className="h-8 w-8 text-success mx-auto mb-2" />
-                    <h3 className="font-medium text-success">Reset Instructions Sent!</h3>
-                    <p className="text-sm text-success/80 mt-1">
-                      Check your email inbox for your password and student ID
-                    </p>
-                  </div>
-                  
-                  <Button variant="outline" onClick={() => setIsResetRequested(false)} className="w-full">
-                    Back to Login
-                  </Button>
-                </div>}
+                {/* Login Button */}
+                <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-medium shadow-soft" size="lg">
+                  Sign In to StudyStar
+                </Button>
+              </form>
             </CardContent>
           </Card>
 
