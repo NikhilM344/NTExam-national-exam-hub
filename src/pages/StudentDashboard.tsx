@@ -331,7 +331,28 @@ const StudentDashboard = () => {
 
           {/* Exams Tab */}
           <TabsContent value="exams" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="shadow-card bg-gradient-success border-0 text-success-foreground">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    Official Exam
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm mb-4 text-success-foreground/90">
+                    Take your official NTexam National Talent Exam. Available for {studentData.schoolInfo.classGrade}.
+                  </p>
+                  <Button 
+                    className="w-full bg-white text-success hover:bg-white/90"
+                    onClick={() => window.location.href = '/exam'}
+                  >
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Take Exam
+                  </Button>
+                </CardContent>
+              </Card>
+              
               <Card className="shadow-card bg-gradient-card border-0">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
