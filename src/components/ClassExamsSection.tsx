@@ -101,10 +101,10 @@ const ClassExamsSection = () => {
             National Level Exams
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 sm:mb-6" itemProp="name">
-            Class-wise Competitive Exams
+            Class-wise  NTE Exam Exam
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
-            Register for India's premier online competitive exams designed for Classes 6-12. 
+            Register for India's premier online  NTE Exam Exam designed for Classes 6-12. 
             Join over 50,000+ students nationwide and compete for academic excellence.
           </p>
         </header>

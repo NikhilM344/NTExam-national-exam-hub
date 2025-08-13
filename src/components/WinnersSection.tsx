@@ -91,7 +91,7 @@ const WinnersSection = () => {
             Top Performers & Academic Champions
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed" itemProp="description">
-            Meet our exceptional students who achieved academic excellence in competitive exams. 
+            Meet our exceptional students who achieved academic excellence in  NTE Exam Exam. 
             These inspiring young minds represent the future leaders of India and motivate thousands of students nationwide.
           </p>
         </header>

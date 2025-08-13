@@ -7,8 +7,8 @@ const BlogsSection = () => {
   const blogs = [
     {
       id: 1,
-      title: "Master Competitive Exams: Top 10 Proven Study Strategies for Success",
-      excerpt: "Discover scientifically-backed study methods and strategies used by top exam achievers. Learn time-tested techniques to excel in competitive exams like NTexam and boost your academic performance.",
+      title: "Master  NTE Exam Exam: Top 10 Proven Study Strategies for Success",
+      excerpt: "Discover scientifically-backed study methods and strategies used by top exam achievers. Learn time-tested techniques to excel in  NTE Exam Exam like  NTExam and boost your academic performance.",
       author: "Dr. Priya Sharma",
       date: "March 15, 2024",
       readTime: "5 min read",

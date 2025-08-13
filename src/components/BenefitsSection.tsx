@@ -56,13 +56,13 @@ const BenefitsSection = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4" itemProp="name">
             Why Choose{' '}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              NTexam
+               NTExam
             </span>
             {' '}for Competitive Exam Preparation?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
             Discover the comprehensive benefits and advantages of India's leading online competitive exam platform. 
-            Join over 50,000+ students who have already transformed their academic journey with NTexam.
+            Join over 50,000+ students who have already transformed their academic journey with  NTExam.
           </p>
         </header>
 
@@ -132,7 +132,7 @@ const BenefitsSection = () => {
             </h3>
             <p className="text-white/90 mb-6 max-w-2xl mx-auto">
               Join thousands of students who have already begun their path to academic excellence. 
-              Register today and experience the benefits of NTexam firsthand.
+              Register today and experience the benefits of  NTExam firsthand.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-white text-primary px-8 py-4 rounded-xl font-semibold hover:bg-white/90 transition-colors shadow-soft">

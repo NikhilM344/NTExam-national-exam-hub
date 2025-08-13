@@ -83,7 +83,7 @@ const Payment = () => {
             <h1 className="text-3xl font-bold">Payment</h1>
           </div>
           <p className="text-white/90">
-            Complete your registration payment for NTexam - National Talent Exam
+            Complete your registration payment for  NTExam - Navoday Talent Exam
           </p>
         </div>
       </div>

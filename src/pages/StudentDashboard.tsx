@@ -104,7 +104,7 @@ const StudentDashboard = () => {
                 Welcome, {studentData.personalInfo.fullName}
               </h1>
               <p className="text-white/90">
-                Student Dashboard - NTexam National Talent Exam
+                Student Dashboard -  NTExam Navoday Talent Exam
               </p>
             </div>
             <Button 
@@ -341,7 +341,7 @@ const StudentDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm mb-4 text-success-foreground/90">
-                    Take your official NTexam National Talent Exam. Available for {studentData.schoolInfo.classGrade}.
+                    Take your official  NTExam Navoday Talent Exam. Available for {studentData.schoolInfo.classGrade}.
                   </p>
                   <Button 
                     className="w-full bg-white text-success hover:bg-white/90"

@@ -39,16 +39,16 @@ const HeroSection = () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight" itemProp="headline">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-warning to-accent bg-clip-text text-transparent">
-                NTexam
+                 NTExam
               </span>{' '}
-              <span className="block sm:inline">National Talent Exam</span>
+              <span className="block sm:inline">Navoday Talent Exam</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium" itemProp="description">
               India's Premier Online Competitive Exam Platform for Students
             </p>
             <p className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
-              Join over 50,000 students preparing for competitive exams with our comprehensive 
-              study materials, practice tests, and expert guidance. Build your academic future with NTexam!
+              Join over 50,000 students preparing for  NTE Exam Exam with our comprehensive 
+              study materials, practice tests, and expert guidance. Build your academic future with  NTExam!
             </p>
           </header>
 
@@ -57,7 +57,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 font-semibold text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-xl shadow-card transition-all duration-300 hover:scale-105 focus:ring-4 focus:ring-white/30"
-              aria-label="Start your competitive exam journey with NTexam"
+              aria-label="Start your competitive exam journey with  NTExam"
             >
               <Trophy className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Start Exam Preparation
@@ -75,7 +75,7 @@ const HeroSection = () => {
 
           {/* Achievement Stats */}
           <div className="mt-8 sm:mt-12" itemScope itemType="https://schema.org/Organization">
-            <h2 className="sr-only">NTexam Platform Statistics and Achievements</h2>
+            <h2 className="sr-only"> NTExam Platform Statistics and Achievements</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               <div className="text-center p-2 sm:p-3 rounded-lg bg-white/10 backdrop-blur-sm">
                 <div className="text-2xl sm:text-3xl font-bold text-white" itemProp="numberOfEmployees">50,000+</div>

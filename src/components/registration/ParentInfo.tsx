@@ -20,16 +20,16 @@ const ParentInfoStep = ({ data, onUpdate, errors }: ParentInfoStepProps) => {
 
   return (
     <Card className="shadow-card bg-gradient-card border-0">
-      <CardHeader>
+      {/* <CardHeader>
         <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Users className="h-6 w-6 text-primary" />
           Parent/Guardian Information
         </CardTitle>
         <p className="text-muted-foreground">Please provide parent or guardian contact details</p>
-      </CardHeader>
+      </CardHeader> */}
       <CardContent className="space-y-6">
         {/* Parent/Guardian Name */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="parentName" className="text-sm font-medium text-foreground">
             Name of Parent/Guardian *
           </Label>
@@ -42,10 +42,10 @@ const ParentInfoStep = ({ data, onUpdate, errors }: ParentInfoStepProps) => {
             className={`bg-background ${errors.parentName ? 'border-destructive' : 'border-border'}`}
           />
           {errors.parentName && <p className="text-sm text-destructive">{errors.parentName}</p>}
-        </div>
+        </div> */}
 
         {/* Contact Information */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="parentContactNumber" className="text-sm font-medium text-foreground flex items-center gap-2">
               <Phone className="h-4 w-4 text-primary" />
@@ -77,11 +77,11 @@ const ParentInfoStep = ({ data, onUpdate, errors }: ParentInfoStepProps) => {
             />
             {errors.parentEmail && <p className="text-sm text-destructive">{errors.parentEmail}</p>}
           </div>
-        </div>
+        </div> */}
 
         {/* Important Information */}
         <div className="space-y-4">
-          <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-info">
+          {/* <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-info">
             <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
               <Info className="h-4 w-4 text-primary" />
               Why do we need parent/guardian information?
@@ -93,7 +93,7 @@ const ParentInfoStep = ({ data, onUpdate, errors }: ParentInfoStepProps) => {
               <li>• To share student performance reports</li>
               <li>• To provide password reset assistance</li>
             </ul>
-          </div>
+          </div> */}
 
           <div className="bg-gradient-success rounded-lg p-4 text-white">
             <h4 className="font-semibold mb-2">Communication Preferences:</h4>

@@ -52,7 +52,7 @@ const ContactSection = () => {
         {/* Section Header */}
         <header className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4" itemProp="name">
-            Contact NTexam Support Team
+            Contact  NTExam Support Team
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
             Need assistance with exam registration, technical support, or have questions about our competitive exam platform? 

@@ -64,10 +64,10 @@ const Login = () => {
         <div className="container mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <img src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" alt="National Talent Exam Logo" className="h-10 w-10 sm:h-12 sm:w-12" />
+            <img src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" alt="Navoday Talent Exam Logo" className="h-10 w-10 sm:h-12 sm:w-12" />
             <div className="ml-3">
-              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">NTexam</h1>
-              <p className="text-xs text-white/70 hidden sm:block">National Talent Exam</p>
+              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent"> NTExam</h1>
+              <p className="text-xs text-white/70 hidden sm:block">Navoday Talent Exam</p>
             </div>
           </div>
           

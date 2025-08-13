@@ -7,8 +7,8 @@ const Footer = () => {
     {
       title: "Quick Navigation",
       links: [
-        { name: "Home - NTexam Platform", href: "#home" },
-        { name: "About NTexam", href: "#about" },
+        { name: "Home -  NTExam Platform", href: "#home" },
+        { name: "About  NTExam", href: "#about" },
         { name: "Exam Syllabus & Study Materials", href: "#syllabus" },
         { name: "Exam Calendar & Schedule", href: "#calendar" },
         { name: "Top Performers & Winners", href: "#achievers" },
@@ -55,8 +55,8 @@ const Footer = () => {
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white" itemProp="name">NTexam</h1>
-                <p className="text-xs sm:text-sm text-white/80" itemProp="description">National Talent Exam Platform</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white" itemProp="name"> NTExam</h1>
+                <p className="text-xs sm:text-sm text-white/80" itemProp="description">Navoday Talent Exam Platform</p>
               </div>
             </div>
             
@@ -69,7 +69,7 @@ const Footer = () => {
             <div className="space-y-2 text-sm text-white/70">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>noreply@ntexam.in</span>
+                <span>noreply@ NTExam.in</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
@@ -147,7 +147,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-white/70 text-center md:text-left">
-              © {currentYear} National Talent Exam. All rights reserved.
+              © {currentYear} Navoday Talent Exam. All rights reserved.
             </div>
           </div>
         </div>

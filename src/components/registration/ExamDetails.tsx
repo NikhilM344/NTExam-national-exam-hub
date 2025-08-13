@@ -92,7 +92,7 @@ const ExamDetailsStep = ({ data, onUpdate, errors }: ExamDetailsStepProps) => {
         </div>
 
         {/* Exam Center Selection */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
             Preferred Exam Center
@@ -115,10 +115,10 @@ const ExamDetailsStep = ({ data, onUpdate, errors }: ExamDetailsStepProps) => {
           <p className="text-xs text-muted-foreground">
             Choose the exam center nearest to your location. Final allocation depends on availability.
           </p>
-        </div>
+        </div> */}
 
         {/* Exam Date Selection */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
             Exam Date
@@ -141,7 +141,7 @@ const ExamDetailsStep = ({ data, onUpdate, errors }: ExamDetailsStepProps) => {
           <p className="text-xs text-muted-foreground">
             Select the exam date that corresponds to your class level.
           </p>
-        </div>
+        </div> */}
 
         {/* Exam Information */}
         <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-warning">
