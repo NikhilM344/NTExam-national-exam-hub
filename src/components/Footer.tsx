@@ -7,8 +7,8 @@ const Footer = () => {
     {
       title: "Quick Navigation",
       links: [
-        { name: "Home -  NTExam Platform", href: "#home" },
-        { name: "About  NTExam", href: "#about" },
+        { name: "Home -  NTExam Platform", href: "/" },
+        { name: "About  NTExam", href: "/about-us" },
         { name: "Exam Syllabus & Study Materials", href: "#syllabus" },
         { name: "Exam Calendar & Schedule", href: "#calendar" },
         { name: "Top Performers & Winners", href: "#achievers" },
@@ -27,10 +27,9 @@ const Footer = () => {
     {
       title: "Legal",
       links: [
-        { name: "Privacy Policy", href: "#privacy" },
-        { name: "Terms & Conditions", href: "#terms" },
-        { name: "Cancellation Policy", href: "#cancellation" },
-        { name: "Refund Policy", href: "#refund" },
+        { name: "Privacy Policy", href: "/privacy-policy" },
+        { name: "Terms & Conditions", href: "/terms-conditions" },
+        { name: "Cancellation & Refund Policy", href: "/cancellation-refund" },
         { name: "Cookie Policy", href: "#cookies" },
       ]
     }

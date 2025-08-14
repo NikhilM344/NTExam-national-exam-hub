@@ -12,6 +12,10 @@ import Login from "./pages/Login";
 import Exam from "./pages/Exam";
 import ExamResult from "./pages/ExamResult";
 import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsConditions";
+import AboutUs from "./pages/AboutUs";
+import CancellationRefund from "./pages/CancellationRefund";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/exam" element={<Exam />} />
             <Route path="/exam-result" element={<ExamResult />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-conditions" element={<TermsConditions />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/cancellation-refund" element={<CancellationRefund />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

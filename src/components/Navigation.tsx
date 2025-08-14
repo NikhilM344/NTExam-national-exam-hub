@@ -71,8 +71,8 @@ const Navigation = () => {
   };
 
   const navItems = [
-    { label: 'Home', href: '#home', icon: BookOpen },
-    { label: 'About Us', href: '#about', icon: BookOpen },
+    { label: 'Home', href: '/', icon: BookOpen },
+    { label: 'About Us', href: '/about-us', icon: BookOpen },
     { label: 'Syllabus & Sample Papers', href: '#syllabus', icon: BookOpen },
     { label: 'Exam Calendar', href: '#calendar', icon: Calendar },
     { label: 'Achievers & Winners', href: '#achievers', icon: Trophy },
