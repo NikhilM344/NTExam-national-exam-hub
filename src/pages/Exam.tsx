@@ -31,24 +31,46 @@ const Exam = () => {
       return;
     }
 
-    const parsedStudent = JSON.parse(student);
-    setStudentData(parsedStudent);
+    try {
+      const parsedStudent = JSON.parse(student);
+      
+      // Check if student data has the required structure
+      if (!parsedStudent || !parsedStudent.schoolInfo || !parsedStudent.schoolInfo.classGrade) {
+        toast({
+          title: "Invalid Student Data",
+          description: "Please complete your registration first.",
+          variant: "destructive"
+        });
+        navigate('/registration');
+        return;
+      }
 
-    // Get exam for student's standard
-    const exam = getExamByStandard(parsedStudent.schoolInfo.classGrade);
-    if (!exam) {
+      setStudentData(parsedStudent);
+
+      // Get exam for student's standard
+      const exam = getExamByStandard(parsedStudent.schoolInfo.classGrade);
+      if (!exam) {
+        toast({
+          title: "No Exam Available",
+          description: "No exam is currently scheduled for your class.",
+          variant: "destructive"
+        });
+        navigate('/student-dashboard');
+        return;
+      }
+
+      setExamData(exam);
+      const examQuestions = getQuestionsForExam(parsedStudent.schoolInfo.classGrade);
+      setQuestions(examQuestions);
+    } catch (error) {
+      console.error('Error parsing student data:', error);
       toast({
-        title: "No Exam Available",
-        description: "No exam is currently scheduled for your class.",
+        title: "Data Error",
+        description: "Invalid student data. Please login again.",
         variant: "destructive"
       });
-      navigate('/student-dashboard');
-      return;
+      navigate('/login');
     }
-
-    setExamData(exam);
-    const examQuestions = getQuestionsForExam(parsedStudent.schoolInfo.classGrade);
-    setQuestions(examQuestions);
   }, [navigate]);
 
   useEffect(() => {
