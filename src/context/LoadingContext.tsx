@@ -4,9 +4,10 @@ import { GlobalLoader } from '@/components/GlobalLoader';
 
 interface LoadingContextType {
   isLoading: boolean;
-  startLoading: (message?: string) => void;
+  startLoading: (message?: string, variant?: 'book' | 'exam' | 'study' | 'achievement') => void;
   stopLoading: () => void;
   loadingMessage: string;
+  loadingVariant: 'book' | 'exam' | 'study' | 'achievement';
 }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
@@ -29,7 +30,11 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   return (
     <LoadingContext.Provider value={loading}>
       {children}
-      <GlobalLoader isLoading={loading.isLoading} message={loading.loadingMessage} />
+      <GlobalLoader 
+        isLoading={loading.isLoading} 
+        message={loading.loadingMessage}
+        variant={loading.loadingVariant}
+      />
     </LoadingContext.Provider>
   );
 };

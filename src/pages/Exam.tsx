@@ -8,11 +8,13 @@ import { toast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ExamQuestion, getExamByStandard, getQuestionsForExam } from '@/data/examData';
+import { useLoadingContext } from '@/context/LoadingContext';
 
 type Language = 'english' | 'gujarati';
 
 const Exam = () => {
   const navigate = useNavigate();
+  const { startLoading, stopLoading } = useLoadingContext();
   const [studentData, setStudentData] = useState<any>(null);
   const [examData, setExamData] = useState<any>(null);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
@@ -24,9 +26,12 @@ const Exam = () => {
   const [examCompleted, setExamCompleted] = useState(false);
 
   useEffect(() => {
+    startLoading("Setting up your exam environment...", "exam");
+    
     // Check if student is logged in
     const student = localStorage.getItem('studentData');
     if (!student) {
+      stopLoading();
       navigate('/login');
       return;
     }
@@ -62,6 +67,9 @@ const Exam = () => {
       setExamData(exam);
       const examQuestions = getQuestionsForExam(parsedStudent.schoolInfo.classGrade);
       setQuestions(examQuestions);
+      
+      // Stop loading after setup is complete
+      setTimeout(() => stopLoading(), 1500);
     } catch (error) {
       console.error('Error parsing student data:', error);
       toast({
@@ -122,6 +130,7 @@ const Exam = () => {
   };
 
   const handleSubmitExam = () => {
+    startLoading("Submitting your exam...", "exam");
     setExamCompleted(true);
     
     // Calculate results
@@ -150,6 +159,7 @@ const Exam = () => {
     });
 
     setTimeout(() => {
+      stopLoading();
       navigate('/exam-result');
     }, 2000);
   };

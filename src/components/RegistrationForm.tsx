@@ -128,7 +128,7 @@ const RegistrationForm = () => {
     }
 
     setIsSubmitting(true);
-    startLoading("Processing your registration...");
+    startLoading("Processing your registration...", "study");
 
     // Generate password from date of birth
     const password = generatePassword(formData.personalInfo.dateOfBirth);
@@ -155,7 +155,7 @@ const RegistrationForm = () => {
 
       // Small delay before redirect to show success message
       setTimeout(() => {
-        startLoading("Redirecting to payment...");
+        startLoading("Redirecting to payment...", "book");
         window.location.href = '/payment';
       }, 1500);
     }, 2000);

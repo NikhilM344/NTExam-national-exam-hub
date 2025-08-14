@@ -20,11 +20,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useLoadingContext } from '@/context/LoadingContext';
 
 const StudentDashboard = () => {
   const [studentData, setStudentData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { startLoading, stopLoading } = useLoadingContext();
 
   useEffect(() => {
     // Check if student is logged in
@@ -54,10 +56,16 @@ const StudentDashboard = () => {
   };
 
   const handleDownload = (type: string) => {
-    toast({
-      title: "Download Started",
-      description: `Your ${type} is being prepared for download.`,
-    });
+    startLoading(`Preparing your ${type} for download...`, "achievement");
+    
+    // Simulate download process
+    setTimeout(() => {
+      stopLoading();
+      toast({
+        title: "Download Started",
+        description: `Your ${type} is being prepared for download.`,
+      });
+    }, 1500);
     // In a real app, this would trigger actual file download
   };
 
@@ -345,7 +353,13 @@ const StudentDashboard = () => {
                   </p>
                   <Button 
                     className="w-full bg-white text-success hover:bg-white/90"
-                    onClick={() => window.location.href = '/exam'}
+                    onClick={() => {
+                      startLoading("Preparing your exam environment...", "exam");
+                      setTimeout(() => {
+                        stopLoading();
+                        window.location.href = '/exam';
+                      }, 2000);
+                    }}
                   >
                     <Trophy className="h-4 w-4 mr-2" />
                     Take Exam
