@@ -40,7 +40,7 @@ const Registration = () => {
             Join  NTExam - Navoday Talent Exam
           </p>
           <p className="text-white/80 max-w-2xl mx-auto">
-            Complete your registration to participate in our  NTE Exam Exam and showcase your academic talents. 
+            Complete your registration to participate in our NTE Exam and showcase your academic talents. 
             Follow the step-by-step process to ensure accurate registration.
           </p>
         </div>
@@ -62,21 +62,21 @@ const Registration = () => {
               <div className="bg-card p-4 rounded-lg shadow-soft">
                 <h4 className="font-medium text-foreground mb-2">Technical Support</h4>
                 <p className="text-muted-foreground">
-                  Email: support@ NTExam.in<br />
-                  Phone: +91 9876543210
+                  Email:noreply@ NTExam.in<br />
+                  Phone: +919426060635
                 </p>
               </div>
               <div className="bg-card p-4 rounded-lg shadow-soft">
                 <h4 className="font-medium text-foreground mb-2">Registration Help</h4>
                 <p className="text-muted-foreground">
-                  Email: registration@ NTExam.in<br />
+                  Email: noreply@ NTExam.in<br />
                   Available: Mon-Fri 9AM-6PM
                 </p>
               </div>
               <div className="bg-card p-4 rounded-lg shadow-soft">
                 <h4 className="font-medium text-foreground mb-2">Payment Issues</h4>
                 <p className="text-muted-foreground">
-                  Email: payments@ NTExam.in<br />
+                  Email: noreply@ NTExam.in<br />
                   Response within 24 hours
                 </p>
               </div>

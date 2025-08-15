@@ -58,7 +58,7 @@ const BenefitsSection = () => {
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                NTExam
             </span>
-            {' '}for Competitive Exam Preparation?
+            {' '}for Preparation?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
             Discover the comprehensive benefits and advantages of India's leading online competitive exam platform. 

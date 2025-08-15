@@ -43,12 +43,12 @@ const HeroSection = () => {
               </span>{' '}
               <span className="block sm:inline">Navoday Talent Exam</span>
             </h1>
+            
             <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium" itemProp="description">
-              India's Premier Online Competitive Exam Platform for Students
+              India's Trusted Talent Exam Platform for Students 
             </p>
             <p className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
-              Join over 50,000 students preparing for  NTE Exam Exam with our comprehensive 
-              study materials, practice tests, and expert guidance. Build your academic future with  NTExam!
+             Join over 50,000 students preparing for NTExam with our comprehensive study materials, practice tests, and expert guidance. Build your academic future with NTExam
             </p>
           </header>
 

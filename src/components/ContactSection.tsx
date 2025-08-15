@@ -1,26 +1,35 @@
-import { useState } from 'react';
-import { Mail, Phone, User, MessageSquare, Send, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import {
+  Mail,
+  Phone,
+  User,
+  MessageSquare,
+  Send,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: ''
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -34,29 +43,42 @@ const ContactSection = () => {
         title: "Message Sent Successfully!",
         description: "Thank you for contacting us. We'll get back to you soon.",
       });
-      
+
       // Reset form
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        message: ''
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
       });
       setIsSubmitting(false);
     }, 1500);
   };
 
   return (
-    <section id="contact" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background" itemScope itemType="https://schema.org/ContactPage">
+    <section
+      id="contact"
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-background"
+      itemScope
+      itemType="https://schema.org/ContactPage"
+    >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <header className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4" itemProp="name">
-            Contact  NTExam Support Team
+          <h2
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4"
+            itemProp="name"
+          >
+            Contact NTExam Support Team
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
-            Need assistance with exam registration, technical support, or have questions about our competitive exam platform? 
-            Our dedicated support team is here to help you succeed. Get in touch and we'll respond within 24 hours.
+          <p
+            className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            itemProp="description"
+          >
+            Need assistance with exam registration, technical support, or have
+            questions about our competitive exam platform? Our dedicated support
+            team is here to help you succeed. Get in touch and we'll respond
+            within 24 hours.
           </p>
         </header>
 
@@ -73,7 +95,10 @@ const ContactSection = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name Field */}
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label
+                    htmlFor="name"
+                    className="text-sm font-medium text-foreground flex items-center gap-2"
+                  >
                     <User className="h-4 w-4 text-primary" />
                     Full Name
                   </label>
@@ -91,7 +116,10 @@ const ContactSection = () => {
 
                 {/* Email Field */}
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label
+                    htmlFor="email"
+                    className="text-sm font-medium text-foreground flex items-center gap-2"
+                  >
                     <Mail className="h-4 w-4 text-primary" />
                     Email Address
                   </label>
@@ -109,7 +137,10 @@ const ContactSection = () => {
 
                 {/* Phone Field */}
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label
+                    htmlFor="phone"
+                    className="text-sm font-medium text-foreground flex items-center gap-2"
+                  >
                     <Phone className="h-4 w-4 text-primary" />
                     Phone Number
                   </label>
@@ -127,7 +158,10 @@ const ContactSection = () => {
 
                 {/* Message Field */}
                 <div className="space-y-2">
-                  <label htmlFor="message" className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label
+                    htmlFor="message"
+                    className="text-sm font-medium text-foreground flex items-center gap-2"
+                  >
                     <MessageSquare className="h-4 w-4 text-primary" />
                     Your Message
                   </label>
@@ -144,8 +178,8 @@ const ContactSection = () => {
                 </div>
 
                 {/* Submit Button */}
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSubmitting}
                   className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold py-3 transition-all duration-300"
                 >
@@ -176,9 +210,12 @@ const ContactSection = () => {
                       <Mail className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">Email Us</h3>
-                      <p className="text-muted-foreground">info@studystarexamhub.com</p>
-                      <p className="text-muted-foreground">support@studystarexamhub.com</p>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Email Us
+                      </h3>
+                      <p className="text-muted-foreground">
+                        noreply@ NTExam.in
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -191,10 +228,14 @@ const ContactSection = () => {
                       <Phone className="h-6 w-6 text-success-foreground" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">Call Us</h3>
-                      <p className="text-muted-foreground">+91 9876543210</p>
-                      <p className="text-muted-foreground">+91 9876543211</p>
-                      <p className="text-xs text-muted-foreground mt-1">Mon-Fri: 9:00 AM - 6:00 PM</p>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Call Us
+                      </h3>
+                      <p className="text-muted-foreground">+919426060635</p>
+                    
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Mon-Fri: 9:00 AM - 6:00 PM
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -204,23 +245,33 @@ const ContactSection = () => {
             {/* Why Contact Us */}
             <Card className="shadow-card bg-gradient-hero border-0">
               <CardContent className="p-6 text-white">
-                <h3 className="text-xl font-bold mb-4 text-center">Why Contact Us?</h3>
+                <h3 className="text-xl font-bold mb-4 text-center">
+                  Why Contact Us?
+                </h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                    <span className="text-sm">Quick response within 24 hours</span>
+                    <span className="text-sm">
+                      Quick response within 24 hours
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                    <span className="text-sm">Expert guidance for exam preparation</span>
+                    <span className="text-sm">
+                      Expert guidance for exam preparation
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                    <span className="text-sm">Technical support for platform issues</span>
+                    <span className="text-sm">
+                      Technical support for platform issues
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                    <span className="text-sm">Assistance with registration process</span>
+                    <span className="text-sm">
+                      Assistance with registration process
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -229,18 +280,32 @@ const ContactSection = () => {
             {/* FAQ Quick Links */}
             <Card className="shadow-card bg-gradient-card border-0">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Quick Help</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Quick Help
+                </h3>
                 <div className="space-y-2">
-                  <a href="#" className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+                  >
                     → How to register for exams?
                   </a>
-                  <a href="#" className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+                  >
                     → Payment and fee structure
                   </a>
-                  <a href="#" className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+                  >
                     → Download hall tickets
                   </a>
-                  <a href="#" className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors">
+                  <a
+                    href="#"
+                    className="block text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+                  >
                     → View results and certificates
                   </a>
                 </div>
