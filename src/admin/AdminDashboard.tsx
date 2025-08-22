@@ -2,13 +2,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  Mail,
   Eye,
   RefreshCcw,
   CheckCircle2,
   XCircle,
   Printer,
-  Megaphone,
   CalendarDays,
   MapPin,
   Settings2,
@@ -73,15 +71,6 @@ type ResultRow = {
   published_at?: string | null;
 };
 
-type Announcement = {
-  id: string;
-  title: string;
-  body: string;
-  published_at?: string | null;
-  created_at?: string | null;
-  created_by?: string | null;
-};
-
 export default function AdminDashboard() {
   const { toast } = useToast();
 
@@ -105,10 +94,6 @@ export default function AdminDashboard() {
   const [resLoading, setResLoading] = useState(false);
   const [results, setResults] = useState<ResultRow[]>([]);
 
-  const [annLoading, setAnnLoading] = useState(false);
-  const [annForm, setAnnForm] = useState({ title: "", body: "" });
-  const [annList, setAnnList] = useState<Announcement[]>([]);
-
   // per-row "Set exam" dialog
   const [examOpen, setExamOpen] = useState(false);
   const [examForm, setExamForm] = useState<{ date: string; center: string }>({
@@ -117,18 +102,13 @@ export default function AdminDashboard() {
   });
 
   // bulk exam setup
-  const [bulk, setBulk] = useState<{ classGrade: string; date: string; center: string }>({
-    classGrade: "",
-    date: "",
-    center: "",
-  });
-
-  // welcome email sender (per-row & bulk)
-  const [fromEmail, setFromEmail] = useState<string>(admin?.email || "");
-
-  // sending states
-  const [sendingIds, setSendingIds] = useState<Set<string>>(new Set());
-  const [bulkSending, setBulkSending] = useState(false);
+  const [bulk, setBulk] = useState<{ classGrade: string; date: string; center: string }>(
+    {
+      classGrade: "",
+      date: "",
+      center: "",
+    }
+  );
 
   /* ---------- Fetchers ---------- */
   const loadRegistrations = async () => {
@@ -161,26 +141,9 @@ export default function AdminDashboard() {
     }
   };
 
-  const loadAnnouncements = async () => {
-    setAnnLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("*")
-        .order("published_at", { ascending: false });
-      if (error) throw error;
-      setAnnList(Array.isArray(data) ? (data as Announcement[]) : []);
-    } catch {
-      // ignore if table not created yet
-    } finally {
-      setAnnLoading(false);
-    }
-  };
-
   useEffect(() => {
     loadRegistrations();
     loadResults();
-    loadAnnouncements();
   }, []);
 
   /* ---------- Derived ---------- */
@@ -218,7 +181,11 @@ export default function AdminDashboard() {
   const saveExamForOne = async () => {
     if (!selected) return;
     if (!examForm.date || !examForm.center) {
-      toast({ title: "Missing fields", description: "Date and center are required.", variant: "destructive" });
+      toast({
+        title: "Missing fields",
+        description: "Date and center are required.",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -230,7 +197,10 @@ export default function AdminDashboard() {
         })
         .eq("id", selected.id);
       if (error) throw error;
-      toast({ title: "Exam info saved", description: `Updated ${selected.full_name || "student"}.` });
+      toast({
+        title: "Exam info saved",
+        description: `Updated ${selected.full_name || "student"}.`,
+      });
       setExamOpen(false);
       loadRegistrations();
     } catch (e: any) {
@@ -257,78 +227,6 @@ export default function AdminDashboard() {
       loadRegistrations();
     } catch (e: any) {
       toast({ title: "Failed to apply exam", description: e?.message, variant: "destructive" });
-    }
-  };
-
-  /** Send Welcome Email — per-row click handler with loading state */
-  const sendWelcomeEmail = async (r: Registration) => {
-    const id = r.id;
-    const from = fromEmail || admin?.email || "";
-    if (!from) {
-      toast({ title: "Missing sender", description: "Enter From email (top right of Registrations).", variant: "destructive" });
-      return;
-    }
-    if (!r.email) {
-      toast({ title: "Missing recipient", description: "Student email is empty.", variant: "destructive" });
-      return;
-    }
-
-    setSendingIds((prev) => new Set(prev).add(id));
-    try {
-      const { error } = await supabase.functions.invoke("admin-send-welcome", {
-        body: {
-          from,
-          to: r.email,
-          name: r.full_name,
-          registrationId: r.id,
-        },
-      });
-      if (error) throw error;
-      toast({ title: "Welcome email queued", description: `To ${r.email}` });
-    } catch (e: any) {
-      toast({
-        title: "Couldn’t send email",
-        description:
-          e?.message ||
-          "Ensure the 'admin-send-welcome' Edge Function is deployed and mail provider secrets are set.",
-        variant: "destructive",
-      });
-    } finally {
-      setSendingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  };
-
-  /** Bulk Welcome Emails with a single click */
-  const sendWelcomeBulk = async (list: Registration[]) => {
-    const from = fromEmail || admin?.email || "";
-    if (!from) {
-      toast({ title: "Missing sender", description: "Enter From email first.", variant: "destructive" });
-      return;
-    }
-    if (list.length === 0) {
-      toast({ title: "Nothing to send", description: "No registrations in current filter." });
-      return;
-    }
-
-    setBulkSending(true);
-    try {
-      const jobs = list
-        .filter((r) => !!r.email)
-        .map((r) =>
-          supabase.functions.invoke("admin-send-welcome", {
-            body: { from, to: r.email!, name: r.full_name, registrationId: r.id },
-          })
-        );
-      const settled = await Promise.allSettled(jobs);
-      const ok = settled.filter((s) => s.status === "fulfilled").length;
-      const fail = settled.length - ok;
-      toast({ title: "Bulk welcome complete", description: `Sent: ${ok}, Failed: ${fail}` });
-    } finally {
-      setBulkSending(false);
     }
   };
 
@@ -395,7 +293,6 @@ export default function AdminDashboard() {
         <TabsList className="flex flex-wrap">
           <TabsTrigger value="registrations">Registrations</TabsTrigger>
           <TabsTrigger value="exam-setup">Exam Setup</TabsTrigger>
-          <TabsTrigger value="announcements">Announcements</TabsTrigger>
           <TabsTrigger value="results">Results & Certificates</TabsTrigger>
         </TabsList>
 
@@ -411,23 +308,9 @@ export default function AdminDashboard() {
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-64"
                 />
-                <Input
-                  placeholder="From email (for welcome emails)"
-                  value={fromEmail}
-                  onChange={(e) => setFromEmail(e.target.value)}
-                  className="w-64"
-                />
                 <Button variant="outline" onClick={loadRegistrations}>
                   <RefreshCcw className="h-4 w-4 mr-2" />
                   Refresh
-                </Button>
-                <Button onClick={() => sendWelcomeBulk(filtered)} disabled={bulkSending}>
-                  {bulkSending ? (
-                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4 mr-2" />
-                  )}
-                  Send Welcome to All (Filtered)
                 </Button>
               </div>
             </CardHeader>
@@ -452,7 +335,6 @@ export default function AdminDashboard() {
                     <tbody>
                       {filtered.map((r) => {
                         const res = resultByReg.get(r.id);
-                        const sending = sendingIds.has(r.id);
                         return (
                           <tr key={r.id} className="border-b last:border-b-0">
                             <td className="py-3 pr-4">{r.full_name || "-"}</td>
@@ -488,19 +370,6 @@ export default function AdminDashboard() {
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => openSetExamDialog(r)}>
                                   <Settings2 className="h-4 w-4 mr-1" /> Set Exam
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => sendWelcomeEmail(r)}
-                                  disabled={sending}
-                                >
-                                  {sending ? (
-                                    <RefreshCcw className="h-4 w-4 mr-1 animate-spin" />
-                                  ) : (
-                                    <Mail className="h-4 w-4 mr-1" />
-                                  )}
-                                  Welcome
                                 </Button>
                                 <Button size="sm" onClick={() => generateCertificate(r, res)} disabled={!res}>
                                   <Printer className="h-4 w-4 mr-1" /> Certificate
@@ -558,100 +427,6 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">
                 This updates <b>all</b> registrations where <b>class_grade</b> equals the value you enter.
               </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* --- Announcements Tab --- */}
-        <TabsContent value="announcements" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>New Announcement</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input
-                placeholder="Title"
-                value={annForm.title}
-                onChange={(e) => setAnnForm((s) => ({ ...s, title: e.target.value }))}
-              />
-              <textarea
-                placeholder="Announcement shown on Home & Student Dashboard (top banner)."
-                value={annForm.body}
-                onChange={(e) => setAnnForm((s) => ({ ...s, body: e.target.value }))}
-                rows={5}
-                className="w-full rounded-md border bg-background p-2 text-sm"
-              />
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={async () => {
-                    if (!annForm.title.trim() || !annForm.body.trim()) {
-                      toast({ title: "Missing fields", description: "Title and body are required.", variant: "destructive" });
-                      return;
-                    }
-                    try {
-                      const payload = {
-                        title: annForm.title.trim(),
-                        body: annForm.body.trim(),
-                        published_at: new Date().toISOString(),
-                        created_by: admin?.email || null,
-                      };
-                      const { error } = await supabase.from("announcements").insert([payload]);
-                      if (error) throw error;
-                      setAnnForm({ title: "", body: "" });
-                      toast({ title: "Announcement published" });
-                      loadAnnouncements();
-                    } catch (e: any) {
-                      toast({
-                        title: "Couldn’t publish",
-                        description:
-                          e?.message ||
-                          "Create table 'announcements' if missing: (id uuid default gen_random_uuid() pk, title text, body text, published_at timestamptz, created_by text).",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  <Megaphone className="h-4 w-4 mr-2" />
-                  Publish
-                </Button>
-                <Button variant="outline" onClick={loadAnnouncements}>
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                <b>Where shown:</b> Home page (Index) and Student Dashboard (top banner).
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Announcements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {annLoading ? (
-                <div className="py-8 text-center text-muted-foreground">Loading…</div>
-              ) : annList.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">No announcements yet.</div>
-              ) : (
-                <div className="space-y-3">
-                  {annList.map((a) => (
-                    <div key={a.id} className="rounded-md border p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{a.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {a.published_at ? new Date(a.published_at).toLocaleString() : ""}
-                        </div>
-                      </div>
-                      <div className="mt-1 text-sm whitespace-pre-wrap">{a.body}</div>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Posted by {a.created_by || "admin"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -762,25 +537,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           ) : null}
-          <DialogFooter className="flex items-center justify-between">
-            <div className="flex-1" />
-            <div className="flex gap-2">
-              {selected ? (
-                <Button
-                  variant="outline"
-                  onClick={() => sendWelcomeEmail(selected)}
-                  disabled={selected ? sendingIds.has(selected.id) : false}
-                >
-                  {selected && sendingIds.has(selected.id) ? (
-                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4 mr-2" />
-                  )}
-                  Send Welcome
-                </Button>
-              ) : null}
-              <Button variant="outline" onClick={() => setDetailOpen(false)}>Close</Button>
-            </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

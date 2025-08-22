@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLoadingContext } from "@/context/LoadingContext";
 import PersonalInfoStep from "./registration/PersonalInfo";
 import SchoolInfoStep from "./registration/SchoolInfo";
-import ExamDetailsStep from "./registration/ExamDetails";
+// import ExamDetailsStep from "./registration/ExamDetails";
 import ParentInfoStep from "./registration/ParentInfo";
 
 import {
@@ -73,8 +73,8 @@ const RegistrationForm = () => {
   const steps = [
     { number: 1, title: "Personal Info", description: "Basic information" },
     { number: 2, title: "School Info", description: "School details" },
-    { number: 3, title: "Exam Details", description: "Subject selection" },
-    { number: 4, title: "Undertaking", description: "Policy" },
+    // { number: 3, title: "Exam Details", description: "Subject selection" },
+    { number: 3, title: "Undertaking", description: "Policy" },
   ];
 
   const validateStep = (step: number): boolean => {
@@ -120,22 +120,22 @@ const RegistrationForm = () => {
           newErrors.schoolName = "School name is required";
         if (!formData.schoolInfo.schoolAddress.trim())
           newErrors.schoolAddress = "School address is required";
-        if (!formData.schoolInfo.schoolCity.trim())
-          newErrors.schoolCity = "School city is required";
-        if (!formData.schoolInfo.schoolState)
-          newErrors.schoolState = "School state is required";
-        if (!formData.schoolInfo.schoolPostalCode.trim())
-          newErrors.schoolPostalCode = "School postal code is required";
+        // if (!formData.schoolInfo.schoolCity.trim())
+        //   newErrors.schoolCity = "School city is required";
+        // if (!formData.schoolInfo.schoolState)
+        //   newErrors.schoolState = "School state is required";
+        // if (!formData.schoolInfo.schoolPostalCode.trim())
+        //   newErrors.schoolPostalCode = "School postal code is required";
         if (!formData.schoolInfo.classGrade)
           newErrors.classGrade = "Class/Grade is required";
         break;
 
-      case 3:
-        if (formData.examDetails.subjects.length === 0)
-          newErrors.subjects = "Please select at least one subject";
-        break;
+      // case 3:
+      //   if (formData.examDetails.subjects.length === 0)
+      //     newErrors.subjects = "Please select at least one subject";
+      //   break;
 
-      case 4:
+      case 3:
         if (!formData.parentInfo.parentName.trim())
           newErrors.parentName = "Parent/Guardian name is required";
         if (!formData.parentInfo.parentContactNumber.trim())
@@ -192,9 +192,9 @@ const handleSubmit = async () => {
       email, // lowercase
       school_name: formData.schoolInfo.schoolName,
       school_address: formData.schoolInfo.schoolAddress,
-      school_city: formData.schoolInfo.schoolCity,
-      school_state: formData.schoolInfo.schoolState,
-      school_postal_code: formData.schoolInfo.schoolPostalCode,
+      // school_city: formData.schoolInfo.schoolCity,
+      // school_state: formData.schoolInfo.schoolState,
+      // school_postal_code: formData.schoolInfo.schoolPostalCode,
       class_grade: formData.schoolInfo.classGrade,
       roll_number: formData.schoolInfo.rollNumber,
       subjects: formData.examDetails.subjects,
@@ -269,15 +269,15 @@ const handleSubmit = async () => {
             errors={errors}
           />
         );
+      // case 3:
+      //   return (
+      //     <ExamDetailsStep
+      //       data={formData.examDetails}
+      //       onUpdate={updateExamDetails}
+      //       errors={errors}
+      //     />
+      //   );
       case 3:
-        return (
-          <ExamDetailsStep
-            data={formData.examDetails}
-            onUpdate={updateExamDetails}
-            errors={errors}
-          />
-        );
-      case 4:
         return (
           <ParentInfoStep
             data={formData.parentInfo}
@@ -340,7 +340,7 @@ const handleSubmit = async () => {
       <div className="mb-8">{renderStep()}</div>
 
       {/* Terms & Conditions (Final Step) */}
-      {currentStep === 4 && (
+      {currentStep === 3 && (
         <Card className="mb-6 shadow-card bg-gradient-card border-0">
           <CardContent className="p-6">
             <div className="flex items-start space-x-3">
@@ -384,7 +384,7 @@ const handleSubmit = async () => {
         </Button>
 
         <div className="flex gap-3">
-          {currentStep < 4 ? (
+          {currentStep < 3 ? (
             <Button
               onClick={handleNext}
               className="bg-gradient-primary hover:opacity-90 text-primary-foreground flex items-center gap-2"
@@ -423,10 +423,7 @@ const handleSubmit = async () => {
               Important Information:
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>
-                • Your login password will be your date of birth (DDMMYYYY
-                format)
-              </li>
+
               <li>• Registration fees: Boys ₹350, Girls ₹250</li>
               <li>• Payment must be completed to confirm your registration</li>
               <li>

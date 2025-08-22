@@ -62,7 +62,7 @@ const SchoolInfoStep = ({ data, onUpdate, errors }: SchoolInfoStepProps) => {
           {errors.schoolAddress && <p className="text-sm text-destructive">{errors.schoolAddress}</p>}
         </div>
 
-        {/* School City, State, Postal Code */}
+        {/* School City, State, Postal Code
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="schoolCity" className="text-sm font-medium text-foreground">
@@ -112,7 +112,7 @@ const SchoolInfoStep = ({ data, onUpdate, errors }: SchoolInfoStepProps) => {
             />
             {errors.schoolPostalCode && <p className="text-sm text-destructive">{errors.schoolPostalCode}</p>}
           </div>
-        </div>
+        </div> */}
 
         {/* Class and Roll Number */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
