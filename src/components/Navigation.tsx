@@ -92,7 +92,7 @@ const Navigation = () => {
               className="rounded-full"
               onClick={handleDashboard}
               aria-label="Open Profile / Dashboard"
-              title="Profile"
+              title="login"
             >
               <User className="h-4 w-4" />
             </Button>
@@ -106,7 +106,7 @@ const Navigation = () => {
               <Button size="sm" className="bg-gradient-primary/70 hover:opacity-90">
                 <a href="/registration" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  New Register
+                  New Registration
                 </a>
               </Button>
             )}

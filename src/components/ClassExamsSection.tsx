@@ -1,9 +1,12 @@
-import { Clock, Users, Award, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useNavigate } from "react-router-dom";
+import { Clock, Users, Award, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const ClassExamsSection = () => {
+  const navigate = useNavigate();
+
   const examClasses = [
     {
       id: 1,
@@ -87,12 +90,17 @@ const ClassExamsSection = () => {
   ];
 
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-subtle relative overflow-hidden" id="exams" itemScope itemType="https://schema.org/EducationalEvent">
+    <section
+      className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-subtle relative overflow-hidden"
+      id="exams"
+      itemScope
+      itemType="https://schema.org/EducationalEvent"
+    >
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
       <div className="absolute top-10 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl opacity-50"></div>
       <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl opacity-30"></div>
-      
+
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header */}
         <header className="text-center mb-12 sm:mb-16">
@@ -101,10 +109,13 @@ const ClassExamsSection = () => {
             National Level Exams
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 sm:mb-6" itemProp="name">
-            Class-wise  NTE Olympiad Exam
+            Class-wise  NTE Exam
           </h2>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
-            Register for India's premier online  NTE Exam Exam designed for Classes 6-12. 
+          <p
+            className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            itemProp="description"
+          >
+            Register for India's premier online  NTE Exam designed for Classes 6-12.
             Join over 50,000+ students nationwide and compete for academic excellence.
           </p>
         </header>
@@ -112,10 +123,10 @@ const ClassExamsSection = () => {
         {/* Exams Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {examClasses.map((exam, index) => (
-            <Card 
-              key={exam.id} 
+            <Card
+              key={exam.id}
               className="group relative overflow-hidden bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-2"
-              itemScope 
+              itemScope
               itemType="https://schema.org/ExamEvent"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -150,7 +161,7 @@ const ClassExamsSection = () => {
                     </div>
                     <span className="font-semibold text-foreground">{exam.duration}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm bg-muted/30 rounded-lg p-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <div className="p-1.5 bg-secondary/10 rounded-md">
@@ -160,7 +171,7 @@ const ClassExamsSection = () => {
                     </div>
                     <span className="font-semibold text-foreground">{exam.participants.toLocaleString()}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between text-sm bg-muted/30 rounded-lg p-3">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <div className="p-1.5 bg-warning/10 rounded-md">
@@ -198,8 +209,10 @@ const ClassExamsSection = () => {
               </CardContent>
 
               <CardFooter className="pt-2 relative z-10">
-                <Button 
+                <Button
+                  onClick={() => navigate("/registration")}
                   className={`w-full ${exam.buttonColor} text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group`}
+                  aria-label={`Register for ${exam.class}`}
                 >
                   Register Now
                   <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -211,10 +224,11 @@ const ClassExamsSection = () => {
 
         {/* View All Button */}
         <div className="text-center mt-16">
-          <Button 
-            size="lg" 
-            variant="outline" 
+          <Button
+            size="lg"
+            variant="outline"
             className="border-2 border-primary/30 bg-card/50 backdrop-blur-sm text-primary hover:bg-primary hover:text-primary-foreground font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
+            onClick={() => navigate("/registration")}
           >
             View All Upcoming Exams
             <ChevronRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
