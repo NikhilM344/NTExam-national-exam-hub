@@ -1,0 +1,11 @@
+// supabase/functions/admin-send-welcome/deno.json
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.177.0/"
+  }
+}
+{
+  "compilerOptions": {
+    "lib": ["deno.ns", "dom"]
+  }
+}

@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* StudyStar Exam Hub - Student-Friendly Design System
+All colors MUST be HSL and designed for children/students
+*/
+
+@layer base {
+  :root {
+    /* Background colors - Light and friendly */
+    --background: 210 20% 98%;
+    --foreground: 215 28% 17%;
+
+    /* Card colors - Clean and modern */
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+
+    /* Primary colors - Deep blue/navy from logo shield */
+    --primary: 220 100% 25%;
+    --primary-foreground: 45 100% 85%;
+    --primary-hover: 220 100% 30%;
+
+    /* Secondary colors - Gold/yellow from logo sun */
+    --secondary: 45 100% 55%;
+    --secondary-foreground: 220 100% 15%;
+
+    /* Success colors - Green for achievements */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning colors - Orange for attention */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Muted colors */
+    --muted: 210 20% 92%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent colors - Warm gold accent */
+    --accent: 42 87% 65%;
+    --accent-foreground: 220 100% 15%;
+
+    /* Destructive colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border and input colors */
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 217 91% 60%;
+
+    /* Logo-inspired gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 100% 15%), hsl(220 100% 25%), hsl(220 100% 20%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(45 30% 96%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 25%), hsl(45 100% 55%));
+
+    /* Logo-themed shadows */
+    --shadow-soft: 0 4px 20px -8px hsl(220 100% 25% / 0.3);
+    --shadow-card: 0 8px 32px -12px hsl(220 50% 20% / 0.15);
+    --shadow-winner: 0 12px 40px -16px hsl(45 87% 65% / 0.4);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* Book Loader Animation Variables */
+    --book-flip-duration: 2s;
+    --page-fold-duration: 2s;
+
+    --radius: 1rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Educational Loader Global Styles */
+@layer components {
+  .book-loader {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    animation: book-flip var(--book-flip-duration) infinite ease-in-out;
+  }
+  
+  .page-fold {
+    animation: page-fold var(--page-fold-duration) infinite ease-in-out;
+    transform-origin: left center;
+  }
+  
+  .exam-loader {
+    animation: exam-shuffle 3s infinite ease-in-out;
+  }
+  
+  .exam-paper {
+    animation: paper-flip 2s infinite ease-in-out;
+    transform-origin: center;
+  }
+  
+  .study-loader {
+    animation: study-glow 2s infinite ease-in-out alternate;
+  }
+  
+  .achievement-loader {
+    animation: achievement-sparkle 2s infinite ease-in-out;
+  }
+  
+  @keyframes book-flip {
+    0%, 20% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+    25%, 45% { 
+      transform: rotateY(-25deg) rotateX(10deg) translateZ(10px); 
+    }
+    50%, 70% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+    75%, 95% { 
+      transform: rotateY(25deg) rotateX(-10deg) translateZ(10px); 
+    }
+    100% { 
+      transform: rotateY(0deg) rotateX(0deg) translateZ(0); 
+    }
+  }
+  
+  @keyframes page-fold {
+    0%, 20% { 
+      transform: rotateY(0deg); 
+    }
+    25%, 45% { 
+      transform: rotateY(-15deg); 
+    }
+    50%, 70% { 
+      transform: rotateY(0deg); 
+    }
+    75%, 95% { 
+      transform: rotateY(15deg); 
+    }
+    100% { 
+      transform: rotateY(0deg); 
+    }
+  }
+  
+  @keyframes exam-shuffle {
+    0%, 100% { 
+      transform: translateX(0) rotateZ(0deg); 
+    }
+    25% { 
+      transform: translateX(-5px) rotateZ(-2deg); 
+    }
+    50% { 
+      transform: translateX(0) rotateZ(0deg); 
+    }
+    75% { 
+      transform: translateX(5px) rotateZ(2deg); 
+    }
+  }
+  
+  @keyframes paper-flip {
+    0%, 100% { 
+      transform: rotateX(0deg); 
+    }
+    50% { 
+      transform: rotateX(10deg); 
+    }
+  }
+  
+  @keyframes study-glow {
+    0% { 
+      filter: brightness(1) drop-shadow(0 0 5px hsl(var(--primary) / 0.3)); 
+    }
+    100% { 
+      filter: brightness(1.2) drop-shadow(0 0 15px hsl(var(--primary) / 0.6)); 
+    }
+  }
+  
+  @keyframes achievement-sparkle {
+    0%, 100% { 
+      transform: scale(1) rotate(0deg); 
+      filter: brightness(1); 
+    }
+    25% { 
+      transform: scale(1.1) rotate(90deg); 
+      filter: brightness(1.3); 
+    }
+    50% { 
+      transform: scale(1) rotate(180deg); 
+      filter: brightness(1); 
+    }
+    75% { 
+      transform: scale(1.1) rotate(270deg); 
+      filter: brightness(1.3); 
+    }
+  }
+  
+  /* Loading progress animations */
+  @keyframes loading-progress {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
+  
+  /* Educational theme animations */
+  @keyframes educational-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  @keyframes knowledge-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+  }
+}
