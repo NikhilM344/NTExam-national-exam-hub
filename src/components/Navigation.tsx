@@ -1,82 +1,50 @@
-import { useState, useEffect } from 'react';
-import { Menu, X, BookOpen, Trophy, Calendar, Phone, User, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Menu, X, BookOpen, Trophy, Calendar, Phone, User, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [studentData, setStudentData] = useState<any>(null);
-  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is logged in
-    const loginData = localStorage.getItem('studentLogin');
-    if (loginData) {
-      const parsed = JSON.parse(loginData);
-      if (parsed.isLoggedIn) {
-        setIsLoggedIn(true);
-        setStudentData(parsed.studentData);
-      }
+    const legacy = localStorage.getItem("studentLogin");
+    if (legacy) {
+      try {
+        const parsed = JSON.parse(legacy);
+        if (parsed?.isLoggedIn) {
+          setIsLoggedIn(true);
+          setStudentData(parsed.studentData);
+          return;
+        }
+      } catch {}
     }
+    const logged = localStorage.getItem("studentLoggedIn") === "true";
+    if (logged) setIsLoggedIn(true);
   }, []);
 
-  const handleLogin = () => {
-    // Simulate login validation (frontend only)
-    if (loginForm.email && loginForm.password) {
-      // Store login state
-      const loginData = {
-        email: loginForm.email,
-        password: loginForm.password,
-        isLoggedIn: true,
-        studentData: { personalInfo: { email: loginForm.email, fullName: 'Student User' } }
-      };
-      localStorage.setItem('studentLogin', JSON.stringify(loginData));
-      
-      setIsLoggedIn(true);
-      setStudentData(loginData.studentData);
-      setIsLoginOpen(false);
-      setLoginForm({ email: '', password: '' });
-      
-      toast({
-        title: "Login Successful!",
-        description: "Welcome back! You can now access your dashboard.",
-      });
-    } else {
-      toast({
-        title: "Login Failed",
-        description: "Please enter both email and password.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem('studentLogin');
+    localStorage.removeItem("studentLogin");
+    localStorage.removeItem("studentLoggedIn");
+    localStorage.removeItem("studentEmail");
     setIsLoggedIn(false);
     setStudentData(null);
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
+    toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
 
   const handleDashboard = () => {
-    window.location.href = '/student-dashboard';
+    window.location.href = "/student-dashboard";
   };
 
   const navItems = [
-    { label: 'Home', href: '/', icon: BookOpen },
-    { label: 'About Us', href: '/about-us', icon: BookOpen },
-    { label: 'Syllabus & Sample Papers', href: '#syllabus', icon: BookOpen },
-    { label: 'Exam Calendar', href: '#calendar', icon: Calendar },
-    { label: 'Achievers & Winners', href: '#achievers', icon: Trophy },
-    { label: 'Contact Us', href: '#contact', icon: Phone },
+    { label: "Home", href: "/", icon: BookOpen },
+    { label: "About Us", href: "/about-us", icon: BookOpen },
+    { label: "Syllabus & Sample Papers", href: "#syllabus", icon: BookOpen },
+    { label: "Exam Calendar", href: "#calendar", icon: Calendar },
+    { label: "Achievers & Winners", href: "#achievers", icon: Trophy },
+    { label: "Contact Us", href: "#contact", icon: Phone },
   ];
 
   return (
@@ -85,15 +53,19 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <div className="flex items-center" itemScope itemType="https://schema.org/Organization">
-            <img 
-              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png" 
-              alt="Navoday Talent Exam Logo" 
+            <img
+              src="/lovable-uploads/9f424a06-0649-4c27-99a1-0db75774e2e1.png"
+              alt="Navoday Talent Exam Logo"
               className="h-10 w-10 sm:h-12 sm:w-12"
               itemProp="logo"
             />
             <div className="ml-3">
-              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent" itemProp="name"> NTExam</h1>
-              <p className="text-xs text-muted-foreground hidden sm:block" itemProp="description">Navoday Talent Exam</p>
+              <h1 className="text-base sm:text-lg font-bold bg-gradient-primary bg-clip-text text-transparent" itemProp="name">
+                 NTExam
+              </h1>
+              <p className="text-xs text-muted-foreground hidden sm:block" itemProp="description">
+                Navoday Talent Exam
+              </p>
             </div>
           </div>
 
@@ -112,81 +84,38 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Login/Register/Dashboard Buttons */}
+          {/* Desktop Actions: Profile icon (dashboard), New Register / Logout */}
           <div className="hidden md:flex items-center space-x-3">
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-full"
+              onClick={handleDashboard}
+              aria-label="Open Profile / Dashboard"
+              title="Profile"
+            >
+              <User className="h-4 w-4" />
+            </Button>
+
             {isLoggedIn ? (
-              <>
-                <Button 
-                  size="sm" 
-                  className="bg-gradient-primary hover:opacity-90"
-                  onClick={handleDashboard}
-                >
-                  Dashboard
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
             ) : (
-              <>
-                <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <User className="h-4 w-4 mr-2" />
-                      Login
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Student Login</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={loginForm.email}
-                          onChange={(e) => setLoginForm(prev => ({ ...prev, email: e.target.value }))}
-                          placeholder="Enter your email"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          value={loginForm.password}
-                          onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                          placeholder="Enter your password"
-                        />
-                      </div>
-                      <Button onClick={handleLogin} className="w-full">
-                        Login
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button size="sm" className="bg-gradient-primary hover:opacity-90">
-                  <a href="/registration">Register</a>
-                </Button>
-              </>
+              <Button size="sm" className="bg-gradient-primary/70 hover:opacity-90">
+                <a href="/registration" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  New Register
+                </a>
+              </Button>
             )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+            <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
@@ -206,35 +135,46 @@ const Navigation = () => {
                   {item.label}
                 </a>
               ))}
+
+              {/* Mobile Actions */}
               <div className="pt-4 space-y-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleDashboard();
+                  }}
+                  aria-label="Open Profile / Dashboard"
+                  title="Profile"
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+
                 {isLoggedIn ? (
-                  <>
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-gradient-primary hover:opacity-90"
-                      onClick={handleDashboard}
-                    >
-                      Dashboard
-                    </Button>
-                    <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
                 ) : (
-                  <>
-                    <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="w-full">
-                          <User className="h-4 w-4 mr-2" />
-                          Login
-                        </Button>
-                      </DialogTrigger>
-                    </Dialog>
-                    <Button size="sm" className="w-full bg-gradient-primary hover:opacity-90">
-                      <a href="/registration">Register</a>
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    className="w-full bg-gradient-primary/70 hover:opacity-90"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <a href="/registration" className="w-full">
+                      New Register
+                    </a>
+                  </Button>
                 )}
               </div>
             </div>

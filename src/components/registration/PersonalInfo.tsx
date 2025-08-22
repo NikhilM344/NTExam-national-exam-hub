@@ -183,13 +183,32 @@ const PersonalInfoStep = ({ data, onUpdate, errors }: PersonalInfoStepProps) => 
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
+          {/* Password */}
+<div className="grid gap-2">
+  <label htmlFor="password" className="text-sm font-medium">Create Password</label>
+  <input
+    id="password"
+    type="password"
+    value={data.password}
+    onChange={(e) => onUpdate({ ...data, password: e.target.value })}
+    className="border rounded-md px-3 py-2"
+    placeholder="Enter a strong password"
+    required
+  />
+  {errors?.password && (
+    <p className="text-xs text-red-500">{errors.password}</p>
+  )}
+  <p className="text-xs text-muted-foreground">
+    Minimum 6 characters. You’ll use this to log in.
+  </p>
+</div>
+
         </div>
 
         {/* Important Note */}
         <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-primary">
           <h4 className="font-semibold text-foreground mb-2">Important Note:</h4>
           <p className="text-sm text-muted-foreground">
-            Your password will be automatically generated based on your date of birth (DDMMYYYY format). 
             Please remember this for logging into your student dashboard after registration.
           </p>
         </div>

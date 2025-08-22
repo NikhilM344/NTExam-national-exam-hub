@@ -8,6 +8,7 @@ export interface PersonalInfo {
   postalCode: string;
   contactNumber: string;
   email: string;
+  password: string;
 }
 
 export interface SchoolInfo {
@@ -41,13 +42,9 @@ export interface RegistrationData {
   password: string;
 }
 
-export const generatePassword = (dateOfBirth: string): string => {
-  // Remove all slashes and dashes from date
-  return dateOfBirth.replace(/[\/\-]/g, '');
-};
 
 export const calculateFees = (gender: 'male' | 'female' | 'other'): number => {
-  return gender === 'female' ? 250 : 350;
+  return gender === 'female' ? 250 : 1;
 };
 
 export const states = [

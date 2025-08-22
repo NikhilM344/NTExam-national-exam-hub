@@ -1,9 +1,51 @@
-import { useState, useEffect } from 'react';
-import { CreditCard, Shield, CheckCircle, ArrowLeft, Info } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { CreditCard, Shield, CheckCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+type CreateOrderResponse = {
+  ok: boolean;
+  key_id: string;
+  order_id: string;
+  amount: number;     // paise
+  currency: string;   // "INR"
+};
+
+type VerifyResponse = {
+  ok?: boolean;
+  error?: string;
+};
+
+async function loadScript(src: string) {
+  return new Promise<boolean>((resolve) => {
+    const el = document.createElement("script");
+    el.src = src;
+    el.async = true;
+    el.onload = () => resolve(true);
+    el.onerror = () => resolve(false);
+    document.body.appendChild(el);
+  });
+}
+
+/** Optional helper for "Pay Later" (will be ignored if RLS blocks) */
+async function markPaid(isPaid: boolean) {
+  const registrationId = localStorage.getItem("registrationId");
+  if (!registrationId) return;
+  const { error } = await supabase
+    .from("registrations")
+    .update({ is_paid: isPaid })
+    .eq("id", registrationId);
+  if (error) throw error;
+}
 
 const Payment = () => {
   const [registrationData, setRegistrationData] = useState<any>(null);
@@ -12,54 +54,170 @@ const Payment = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get registration data from localStorage
-    const storedData = localStorage.getItem('registrationData');
-    const storedFees = localStorage.getItem('examFees');
+    const storedData = localStorage.getItem("registrationData");
+    const storedFees = localStorage.getItem("examFees");
 
-    if (storedData) {
-      setRegistrationData(JSON.parse(storedData));
-    }
-    if (storedFees) {
-      setFees(parseInt(storedFees));
-    }
+    if (storedData) setRegistrationData(JSON.parse(storedData));
+    if (storedFees) setFees(parseInt(storedFees));
 
-    // If no data found, redirect to registration
     if (!storedData || !storedFees) {
-      window.location.href = '/registration';
+      window.location.href = "/registration";
     }
   }, []);
 
   const handlePayment = async () => {
-    setIsProcessing(true);
+    try {
+      setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      toast({
-        title: "Payment Successful!",
-        description: "Your registration is now complete. Redirecting to student dashboard...",
+      // 1) Load Razorpay SDK (runtime)
+      const ok = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+      if (!ok) {
+        setIsProcessing(false);
+        toast({
+          title: "Payment Error",
+          description: "Failed to load Razorpay SDK. Check your internet and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 2) Create order via Supabase Edge Function
+      const registrationId = localStorage.getItem("registrationId");
+      if (!registrationId) {
+        setIsProcessing(false);
+        toast({ title: "Missing Info", description: "Registration ID not found.", variant: "destructive" });
+        return;
+      }
+
+      const { data: orderData, error: orderErr } = await supabase.functions.invoke<CreateOrderResponse>(
+        "razorpay-create-order",
+        { body: { registrationId } }
+      );
+
+      if (orderErr || !orderData?.ok) {
+        setIsProcessing(false);
+        toast({
+          title: "Payment Error",
+          description: orderErr?.message || "Could not create payment order. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 3) Configure & open Razorpay Checkout
+      const options: any = {
+        key: orderData.key_id,
+        amount: orderData.amount,                     // in paise
+        currency: orderData.currency || "INR",
+        name: "NTExam",
+        description: "Exam Registration Fee",
+        order_id: orderData.order_id,
+        prefill: {
+          name: registrationData?.personalInfo?.fullName || "",
+          email: registrationData?.personalInfo?.email || "",
+          contact: registrationData?.personalInfo?.contactNumber || "",
+        },
+        theme: { color: "#4f46e5" },
+
+        // 4) On success: verify on server, then route student to dashboard
+        handler: async (resp: any) => {
+          try {
+            const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = resp;
+
+            const { data: verifyData, error: verifyErr } = await supabase.functions.invoke<VerifyResponse>(
+              "razorpay-verify",
+              {
+                body: {
+                  registrationId,
+                  razorpay_order_id,
+                  razorpay_payment_id,
+                  razorpay_signature,
+                },
+              }
+            );
+
+            if (verifyErr || !verifyData?.ok) {
+              setIsProcessing(false);
+              toast({
+                title: "Verification Failed",
+                description: verifyErr?.message || verifyData?.error || "Payment could not be verified.",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            // 5) Success UX & local flags
+            toast({
+              title: "Payment Successful!",
+              description: "Your registration is complete. Redirecting to your dashboard…",
+            });
+
+            // Unlock dashboard immediately in your current flow
+            localStorage.setItem("isPaid", "true");
+
+            // Create/refresh a local login session (matches your existing approach)
+            localStorage.setItem(
+              "studentLogin",
+              JSON.stringify({
+                email: registrationData?.personalInfo?.email,
+                // NOTE: avoid storing raw passwords in production
+                password: registrationData?.password,
+                isLoggedIn: true,
+                studentData: registrationData,
+              })
+            );
+            localStorage.setItem("studentLoggedIn", "true");
+            if (registrationData?.personalInfo?.email) {
+              localStorage.setItem("studentEmail", String(registrationData.personalInfo.email).toLowerCase());
+            }
+
+            // Clear temp data
+            localStorage.removeItem("registrationData");
+            localStorage.removeItem("examFees");
+
+            setTimeout(() => {
+              window.location.href = "/student-dashboard";
+            }, 1000);
+          } catch (e: any) {
+            setIsProcessing(false);
+            toast({
+              title: "Payment Error",
+              description: e?.message || "Unexpected error occurred.",
+              variant: "destructive",
+            });
+          }
+        },
+
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            toast({ title: "Payment Cancelled", description: "You cancelled the payment." });
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (err: any) => {
+        setIsProcessing(false);
+        toast({
+          title: "Payment Failed",
+          description: err?.error?.description || "We couldn’t process the payment. Please try again.",
+          variant: "destructive",
+        });
       });
-
-      // Store login credentials
-      localStorage.setItem('studentLogin', JSON.stringify({
-        email: registrationData?.personalInfo?.email,
-        password: registrationData?.password,
-        isLoggedIn: true,
-        studentData: registrationData
-      }));
-
-      // Clear registration data
-      localStorage.removeItem('registrationData');
-      localStorage.removeItem('examFees');
-
-      // Redirect to homepage
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
-    }, 3000);
+      rzp.open();
+    } catch (e: any) {
+      setIsProcessing(false);
+      toast({
+        title: "Payment Error",
+        description: e?.message || "Unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGoBack = () => {
-    window.location.href = '/registration';
+    window.location.href = "/registration";
   };
 
   if (!registrationData) {
@@ -82,9 +240,7 @@ const Payment = () => {
             <CreditCard className="h-8 w-8" />
             <h1 className="text-3xl font-bold">Payment</h1>
           </div>
-          <p className="text-white/90">
-            Complete your registration payment for  NTExam - Navoday Talent Exam
-          </p>
+          <p className="text-white/90">Complete your registration payment for NTExam - Navoday Talent Exam</p>
         </div>
       </div>
 
@@ -94,19 +250,25 @@ const Payment = () => {
             {/* Registration Summary */}
             <Card className="shadow-card bg-gradient-card border-0">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-foreground">
-                  Registration Summary
-                </CardTitle>
+                <CardTitle className="text-xl font-bold text-foreground">Registration Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Student Info */}
                 <div className="space-y-2">
                   <h4 className="font-semibold text-foreground">Student Information</h4>
                   <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-                    <p><span className="font-medium">Name:</span> {registrationData.personalInfo.fullName}</p>
-                    <p><span className="font-medium">Class:</span> {registrationData.schoolInfo.classGrade}</p>
-                    <p><span className="font-medium">School:</span> {registrationData.schoolInfo.schoolName}</p>
-                    <p><span className="font-medium">Email:</span> {registrationData.personalInfo.email}</p>
+                    <p>
+                      <span className="font-medium">Name:</span> {registrationData.personalInfo.fullName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Class:</span> {registrationData.schoolInfo.classGrade}
+                    </p>
+                    <p>
+                      <span className="font-medium">School:</span> {registrationData.schoolInfo.schoolName}
+                    </p>
+                    <p>
+                      <span className="font-medium">Email:</span> {registrationData.personalInfo.email}
+                    </p>
                   </div>
                 </div>
 
@@ -117,11 +279,13 @@ const Payment = () => {
                     <div>
                       <span className="font-medium text-sm">Subjects:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {registrationData.examDetails.subjects.map((subject: string, index: number) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {subject}
-                          </Badge>
-                        ))}
+                        {(registrationData.examDetails.subjects || []).map(
+                          (subject: string, index: number) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {subject}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     </div>
                     {registrationData.examDetails.examCenter && (
@@ -134,21 +298,6 @@ const Payment = () => {
                         <span className="font-medium">Exam Date:</span> {registrationData.examDetails.examDate}
                       </p>
                     )}
-                  </div>
-                </div>
-
-                {/* Login Credentials */}
-                <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <Info className="h-4 w-4" />
-                    Your Login Credentials
-                  </h4>
-                  <div className="text-sm space-y-1">
-                    <p><span className="font-medium">Email:</span> {registrationData.personalInfo.email}</p>
-                    <p><span className="font-medium">Password:</span> {registrationData.password}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Please save these credentials. You'll need them to access your student dashboard.
-                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -168,7 +317,9 @@ const Payment = () => {
                   <h4 className="font-semibold text-foreground">Fee Breakdown</h4>
                   <div className="bg-muted/50 rounded-lg p-4">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm">Registration Fee ({registrationData.personalInfo.gender === 'female' ? 'Girls' : 'Boys'})</span>
+                      <span className="text-sm">
+                        Registration Fee ({registrationData.personalInfo.gender === "female" ? "Girls" : "Boys"})
+                      </span>
                       <span className="font-semibold">₹{fees}</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
@@ -198,7 +349,7 @@ const Payment = () => {
                   </ul>
                 </div>
 
-                {/* Payment Button */}
+                {/* Pay Now */}
                 <Button
                   onClick={handlePayment}
                   disabled={isProcessing}
@@ -217,13 +368,33 @@ const Payment = () => {
                   )}
                 </Button>
 
-                {/* Back Button */}
+                {/* Pay Later */}
                 <Button
-                  variant="outline"
-                  onClick={handleGoBack}
-                  disabled={isProcessing}
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      await markPaid(false); // may be blocked by RLS; that's fine
+                      toast({
+                        title: "Saved for later",
+                        description: "You can complete payment anytime.",
+                      });
+                    } catch (e: any) {
+                      toast({
+                        title: "Could not save",
+                        description: e?.message,
+                        variant: "destructive",
+                      });
+                    } finally {
+                      window.location.href = "/";
+                    }
+                  }}
                   className="w-full"
                 >
+                  Pay Later
+                </Button>
+
+                {/* Back Button */}
+                <Button variant="outline" onClick={handleGoBack} disabled={isProcessing} className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Registration
                 </Button>

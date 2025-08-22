@@ -160,7 +160,7 @@ const ExamDetailsStep = ({ data, onUpdate, errors }: ExamDetailsStepProps) => {
           <h4 className="font-semibold mb-2">Registration Fees:</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="text-center">
-              <div className="text-xl font-bold">₹350</div>
+              <div className="text-xl font-bold">₹1</div>
               <div className="text-white/80">Boys</div>
             </div>
             <div className="text-center">

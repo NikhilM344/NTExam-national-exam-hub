@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingProvider from "@/context/LoadingContext";
+
+// Public pages
 import Index from "./pages/Index";
 import Registration from "./pages/Registration";
 import Payment from "./pages/Payment";
@@ -16,6 +18,9 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 import AboutUs from "./pages/AboutUs";
 import CancellationRefund from "./pages/CancellationRefund";
+import AdminGuard from "@/admin/AdminGuard";
+import AdminDashboard from "@/admin/AdminDashboard";
+
 
 const queryClient = new QueryClient();
 
@@ -38,7 +43,14 @@ const App = () => (
             <Route path="/terms-conditions" element={<TermsConditions />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/cancellation-refund" element={<CancellationRefund />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route
+              path="/admin"
+              element={
+                <AdminGuard>
+                  <AdminDashboard />
+                </AdminGuard>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

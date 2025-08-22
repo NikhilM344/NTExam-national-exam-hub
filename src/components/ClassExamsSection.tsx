@@ -13,7 +13,7 @@ const ClassExamsSection = () => {
       participants: 1250,
       registrationEnd: "15 Mar 2024",
       examDate: "25 Mar 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-blue-400 to-purple-500",
       buttonColor: "bg-blue-600 hover:bg-blue-700",
@@ -27,7 +27,7 @@ const ClassExamsSection = () => {
       participants: 980,
       registrationEnd: "18 Mar 2024",
       examDate: "28 Mar 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-green-400 to-blue-500",
       buttonColor: "bg-green-600 hover:bg-green-700"
@@ -40,7 +40,7 @@ const ClassExamsSection = () => {
       participants: 1580,
       registrationEnd: "20 Mar 2024",
       examDate: "30 Mar 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-purple-400 to-pink-500",
       buttonColor: "bg-purple-600 hover:bg-purple-700"
@@ -53,7 +53,7 @@ const ClassExamsSection = () => {
       participants: 2100,
       registrationEnd: "22 Mar 2024",
       examDate: "2 Apr 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-orange-400 to-red-500",
       buttonColor: "bg-orange-600 hover:bg-orange-700"
@@ -66,7 +66,7 @@ const ClassExamsSection = () => {
       participants: 3200,
       registrationEnd: "25 Mar 2024",
       examDate: "5 Apr 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-pink-400 to-purple-500",
       buttonColor: "bg-pink-600 hover:bg-pink-700"
@@ -79,7 +79,7 @@ const ClassExamsSection = () => {
       participants: 1890,
       registrationEnd: "28 Mar 2024",
       examDate: "8 Apr 2024",
-      fees: { boys: 350, girls: 250 },
+      fees: { boys: 1, girls: 250 },
       isActive: true,
       badgeColor: "from-teal-400 to-blue-500",
       buttonColor: "bg-teal-600 hover:bg-teal-700"
@@ -101,7 +101,7 @@ const ClassExamsSection = () => {
             National Level Exams
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4 sm:mb-6" itemProp="name">
-            Class-wise  NTE Exam Exam
+            Class-wise  NTE Olympiad Exam
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed" itemProp="description">
             Register for India's premier online  NTE Exam Exam designed for Classes 6-12. 
