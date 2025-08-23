@@ -171,7 +171,7 @@ const PersonalInfoStep = ({ data, onUpdate, errors }: PersonalInfoStepProps) => 
           <div className="space-y-2">
             <Label htmlFor="email" className="text-sm font-medium text-foreground flex items-center gap-2">
               <Mail className="h-4 w-4 text-primary" />
-              Email Address *
+              Email Address 
             </Label>
             <Input
               id="email"

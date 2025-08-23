@@ -1,5 +1,6 @@
 import { Brain, Target, Users, Award, BookOpen, Trophy, Star, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 
 const BenefitsSection = () => {
   const benefits = [
@@ -135,10 +136,16 @@ const BenefitsSection = () => {
               Register today and experience the benefits of  NTExam firsthand.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-primary px-8 py-4 rounded-xl font-semibold hover:bg-white/90 transition-colors shadow-soft">
+              {/* Register Now → go to /registration */}
+              <Link
+                to="/registration"
+                className="bg-white text-primary px-8 py-4 rounded-xl font-semibold hover:bg-white/90 transition-colors shadow-soft inline-flex items-center justify-center"
+              >
                 <Trophy className="h-5 w-5 inline mr-2" />
                 Register Now
-              </button>
+              </Link>
+
+              {/* Keep as a regular button or convert to a Link if you have a route */}
               <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-primary transition-colors">
                 Learn More
               </button>

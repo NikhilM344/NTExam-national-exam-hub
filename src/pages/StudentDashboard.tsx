@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// src/pages/StudentDashboard.tsx
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   User,
@@ -16,6 +17,7 @@ import {
   School,
   MapPin,
   ShieldAlert,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,12 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useLoadingContext } from "@/context/LoadingContext";
-import AnnouncementBanner from "@/components/AnnouncementBanner";
-
-// inside the dashboard body, near the top:
-<div className="mb-6">
-  <AnnouncementBanner />
-</div>
+// import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 /** Shape your UI expects */
 type StudentData = {
@@ -107,87 +104,119 @@ const StudentDashboard = () => {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPaid, setIsPaid] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "documents" | "exams" | "profile">("profile");
+  const [activeTab, setActiveTab] =
+    useState<"overview" | "documents" | "exams" | "profile">("profile");
 
   const { toast } = useToast();
   const { startLoading, stopLoading } = useLoadingContext();
 
-  useEffect(() => {
-    (async () => {
-      // 1) Legacy localStorage key used earlier
-      const legacy = localStorage.getItem("studentLogin");
-      if (legacy) {
-        try {
-          const parsed = JSON.parse(legacy);
-          if (parsed?.isLoggedIn && parsed?.studentData) {
-            setStudentData(parsed.studentData as StudentData);
-            // Try to read paid flag from legacy storage if present
-            const paidFlag =
-              parsed?.isPaid ??
-              parsed?.studentData?.isPaid ??
-              (localStorage.getItem("isPaid") === "true") ??
-              (localStorage.getItem("paymentStatus") === "paid");
-            setIsPaid(!!paidFlag);
-            setActiveTab(!!paidFlag ? "overview" : "profile");
-            setIsLoading(false);
-            return;
-          }
-        } catch {
-          // ignore parse errors
+  // Try to load the registration row from DB:
+  // 1) by registrationId in localStorage (most reliable)
+  // 2) else by email (fallback if you allow it)
+  const loadFromDB = async () => {
+    setIsLoading(true);
+    try {
+      const registrationId = localStorage.getItem("registrationId");
+      if (registrationId) {
+        const { data, error } = await supabase
+          .from("registrations")
+          .select("*")
+          .eq("id", registrationId)
+          .maybeSingle();
+        if (!error && data) {
+          setStudentData(toClientStudentData(data));
+          const paid = !!data.is_paid;
+          setIsPaid(paid);
+          setActiveTab(paid ? "overview" : "profile");
+          setIsLoading(false);
+          return { idUsed: registrationId as string };
         }
       }
 
-      // 2) Newer flags set by your current login code
+      // Fallback: use email if present
       const loggedIn = localStorage.getItem("studentLoggedIn") === "true";
       const email = (localStorage.getItem("studentEmail") || "").toLowerCase();
-
       if (loggedIn && email) {
-        // If registrationData exists locally, prefer it
-        const reg = localStorage.getItem("registrationData");
-        if (reg) {
-          try {
-            const parsed = JSON.parse(reg);
-            if (parsed?.personalInfo) {
-              setStudentData(parsed as StudentData);
-              // Paid status from local flags if any
-              const paidFlag =
-                parsed?.isPaid ??
-                (localStorage.getItem("isPaid") === "true") ??
-                (localStorage.getItem("paymentStatus") === "paid");
-              setIsPaid(!!paidFlag);
-              setActiveTab(!!paidFlag ? "overview" : "profile");
-              setIsLoading(false);
-              return;
-            }
-          } catch {
-            // ignore parse errors
-          }
-        }
-
-        // Fallback: fetch from Supabase by email (DEV: need SELECT policy)
         const { data, error } = await supabase
           .from("registrations")
           .select("*")
           .eq("email", email)
           .maybeSingle();
-
         if (!error && data) {
           setStudentData(toClientStudentData(data));
-          // If your registrations table has is_paid, use it; else default false
-          const paidFlag =
-            (typeof data.is_paid === "boolean" ? data.is_paid : undefined) ??
-            (localStorage.getItem("isPaid") === "true") ??
-            (localStorage.getItem("paymentStatus") === "paid");
-          setIsPaid(!!paidFlag);
-          setActiveTab(!!paidFlag ? "overview" : "profile");
+          const paid = !!data.is_paid;
+          setIsPaid(paid);
+          setActiveTab(paid ? "overview" : "profile");
           setIsLoading(false);
-          return;
+          return { idUsed: data.id as string };
         }
       }
 
-      // 3) No valid session → send to login
+      // Finally, try cached registrationData (purely for display; does NOT drive isPaid)
+      const reg = localStorage.getItem("registrationData");
+      if (reg) {
+        try {
+          const parsed = JSON.parse(reg);
+          if (parsed?.personalInfo) {
+            setStudentData(parsed as StudentData);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // No row found -> send to login
+      setIsLoading(false);
       window.location.href = "/login";
+      return null;
+    } catch (e) {
+      setIsLoading(false);
+      window.location.href = "/login";
+      return null;
+    }
+  };
+
+  // Realtime listener for that registration row (so tabs unlock the moment is_paid flips)
+  const watchPaidStatus = async (registrationId: string) => {
+    const channel = supabase
+      .channel(`reg-${registrationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "registrations",
+          filter: `id=eq.${registrationId}`,
+        },
+        (payload) => {
+          const row: any = payload.new;
+          const paidNow = !!row?.is_paid;
+          setStudentData(toClientStudentData(row));
+          setIsPaid(paidNow);
+          if (paidNow) setActiveTab("overview");
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+
+    (async () => {
+      const loaded = await loadFromDB();
+      if (loaded?.idUsed) {
+        cleanup = await watchPaidStatus(loaded.idUsed);
+      }
     })();
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Intercept tab change: block if unpaid and not going to profile */
@@ -196,7 +225,8 @@ const StudentDashboard = () => {
       setActiveTab("profile");
       toast({
         title: "Payment Required",
-        description: "Please complete your payment to access this section.",
+        description:
+          "Please complete your payment to access this section.",
         variant: "destructive",
       });
       return;
@@ -205,12 +235,14 @@ const StudentDashboard = () => {
   };
 
   const handleLogout = async () => {
-    // If you kept Auth somewhere else you can still: await supabase.auth.signOut();
     localStorage.removeItem("studentLogin");
     localStorage.removeItem("studentLoggedIn");
     localStorage.removeItem("studentEmail");
-    // localStorage.removeItem("registrationData"); // optional
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    // localStorage.removeItem("registrationId"); // optional: keep so dashboard can refetch later
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
     window.location.href = "/login";
   };
 
@@ -219,7 +251,8 @@ const StudentDashboard = () => {
       setActiveTab("profile");
       toast({
         title: "Payment Required",
-        description: "Please complete your payment before downloading documents.",
+        description:
+          "Please complete your payment before downloading documents.",
         variant: "destructive",
       });
       return;
@@ -237,12 +270,12 @@ const StudentDashboard = () => {
   const handlePasswordChange = () => {
     toast({
       title: "Password Change Request",
-      description: "A password reset link has been sent to your registered email.",
+      description:
+        "A password reset link has been sent to your registered email.",
     });
   };
 
   const handlePayNow = () => {
-    // Make sure registrationId & fees are set earlier in your flow
     window.location.href = "/payment";
   };
 
@@ -261,9 +294,15 @@ const StudentDashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-4">Please log in to access your dashboard.</p>
-          <Button onClick={() => (window.location.href = "/login")}>Go to Login</Button>
+          <h1 className="text-2xl font-bold text-foreground mb-4">
+            Access Denied
+          </h1>
+          <p className="text-muted-foreground mb-4">
+            Please log in to access your dashboard.
+          </p>
+          <Button onClick={() => (window.location.href = "/login")}>
+            Go to Login
+          </Button>
         </div>
       </div>
     );
@@ -291,17 +330,37 @@ const StudentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {name}</h1>
-              <p className="text-white/90">Student Dashboard - NTExam Navoday Talent Exam</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                Welcome, {name}
+              </h1>
+              <p className="text-white/90">
+                Student Dashboard - NTExam Navoday Talent Exam
+              </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="border-white text-white hover:bg-white hover:text-primary"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const id = localStorage.getItem("registrationId");
+                  await loadFromDB();
+                  if (id) {
+                    toast({ title: "Status refreshed" });
+                  }
+                }}
+                className="border-white text-white hover:bg-white hover:text-primary"
+              >
+                <RotateCw className="h-4 w-4 mr-2" />
+                Refresh Status
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="border-white text-white hover:bg-white hover:text-primary"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -312,26 +371,45 @@ const StudentDashboard = () => {
           <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 flex items-start gap-3">
             <ShieldAlert className="h-5 w-5 text-warning mt-0.5" />
             <div className="flex-1">
-              <div className="font-semibold text-foreground">Payment Pending</div>
+              <div className="font-semibold text-foreground">
+                Payment Pending
+              </div>
               <div className="text-sm text-muted-foreground">
-                Your account is limited until your exam fee is paid. Complete payment to unlock all sections.
+                Your account is limited until your exam fee is paid. Complete
+                payment to unlock all sections.
               </div>
             </div>
-            <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
+            <Button
+              onClick={handlePayNow}
+              className="bg-gradient-success text-success-foreground"
+            >
               Pay Now
             </Button>
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as any)} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => handleTabChange(v as any)}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="overview" onClick={(e) => !isPaid && e.preventDefault()}>
+            <TabsTrigger
+              value="overview"
+              onClick={(e) => !isPaid && e.preventDefault()}
+            >
               {lockIfUnpaid("Overview")}
             </TabsTrigger>
-            <TabsTrigger value="documents" onClick={(e) => !isPaid && e.preventDefault()}>
+            <TabsTrigger
+              value="documents"
+              onClick={(e) => !isPaid && e.preventDefault()}
+            >
               {lockIfUnpaid("Documents")}
             </TabsTrigger>
-            <TabsTrigger value="exams" onClick={(e) => !isPaid && e.preventDefault()}>
+            <TabsTrigger
+              value="exams"
+              onClick={(e) => !isPaid && e.preventDefault()}
+            >
               {lockIfUnpaid("Exams")}
             </TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -349,15 +427,30 @@ const StudentDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => handleDownload("Fees Receipt")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => handleDownload("Fees Receipt")}
+                  >
                     <FileText className="h-4 w-4 mr-2" />
                     Fees Receipt
                   </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => handleDownload("Hall Ticket")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => handleDownload("Hall Ticket")}
+                  >
                     <Calendar className="h-4 w-4 mr-2" />
                     Hall Ticket
                   </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => handleDownload("Certificate")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => handleDownload("Certificate")}
+                  >
                     <Award className="h-4 w-4 mr-2" />
                     Certificate
                   </Button>
@@ -374,11 +467,18 @@ const StudentDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="text-center">
-                    <Badge variant="secondary" className="bg-success/10 text-success mb-2">
-                      Registered
+                    <Badge
+                      variant="secondary"
+                      className="bg-success/10 text-success mb-2"
+                    >
+                      {isPaid ? "Paid" : "Registered"}
                     </Badge>
-                    <p className="text-sm text-muted-foreground">{classGrade} Exam</p>
-                    <p className="text-xs text-muted-foreground mt-1">{examDate}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {classGrade} Exam
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {examDate}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -394,7 +494,9 @@ const StudentDashboard = () => {
                 <CardContent>
                   <div className="flex flex-wrap gap-1">
                     {subjects.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">No subjects selected</span>
+                      <span className="text-xs text-muted-foreground">
+                        No subjects selected
+                      </span>
                     ) : (
                       subjects.map((subject, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
@@ -426,7 +528,9 @@ const StudentDashboard = () => {
             {/* Recent Activity */}
             <Card className="shadow-card bg-gradient-card border-0">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-foreground">Recent Activity</CardTitle>
+                <CardTitle className="text-xl font-bold text-foreground">
+                  Recent Activity
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -435,8 +539,12 @@ const StudentDashboard = () => {
                       <FileText className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">Registration Completed</p>
-                      <p className="text-sm text-muted-foreground">Successfully registered for {classGrade} exam</p>
+                      <p className="font-medium text-foreground">
+                        Registration Completed
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Successfully registered for {classGrade} exam
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -444,8 +552,14 @@ const StudentDashboard = () => {
                       <Award className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">Payment Confirmed</p>
-                      <p className="text-sm text-muted-foreground">Exam fees payment processed successfully</p>
+                      <p className="font-medium text-foreground">
+                        Payment {isPaid ? "Confirmed" : "Pending"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {isPaid
+                          ? "Exam fees payment processed successfully"
+                          : "Awaiting payment confirmation"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -467,7 +581,10 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Download your payment receipt for exam registration fees.
                   </p>
-                  <Button className="w-full bg-gradient-primary hover:opacity-90" onClick={() => handleDownload("Fees Receipt")}>
+                  <Button
+                    className="w-full bg-gradient-primary hover:opacity-90"
+                    onClick={() => handleDownload("Fees Receipt")}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download Receipt
                   </Button>
@@ -485,7 +602,10 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Download your hall ticket (available 7 days before exam).
                   </p>
-                  <Button className="w-full bg-gradient-primary hover:opacity-90" onClick={() => handleDownload("Hall Ticket")}>
+                  <Button
+                    className="w-full bg-gradient-primary hover:opacity-90"
+                    onClick={() => handleDownload("Hall Ticket")}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download Hall Ticket
                   </Button>
@@ -503,7 +623,10 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Download your participation certificate after exam completion.
                   </p>
-                  <Button className="w-full bg-gradient-primary hover:opacity-90" onClick={() => handleDownload("Certificate")}>
+                  <Button
+                    className="w-full bg-gradient-primary hover:opacity-90"
+                    onClick={() => handleDownload("Certificate")}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Download Certificate
                   </Button>
@@ -533,7 +656,8 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description: "Please complete your payment to access the exam.",
+                          description:
+                            "Please complete your payment to access the exam.",
                           variant: "destructive",
                         });
                         return;
@@ -569,7 +693,8 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description: "Please complete your payment to access mock tests.",
+                          description:
+                            "Please complete your payment to access mock tests.",
                           variant: "destructive",
                         });
                         return;
@@ -600,7 +725,8 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description: "Please complete your payment to access syllabus.",
+                          description:
+                            "Please complete your payment to access syllabus.",
                           variant: "destructive",
                         });
                         return;
@@ -617,7 +743,6 @@ const StudentDashboard = () => {
 
           {/* Profile Tab (Always accessible) */}
           <TabsContent value="profile" className="space-y-6">
-            {/* If unpaid, highlight pay section at top of profile too */}
             {!isPaid && (
               <Card className="shadow-card border border-warning/30 bg-warning/10">
                 <CardHeader>
@@ -630,7 +755,10 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground">
                     Your profile is active, but other sections are locked. Pay now to unlock everything.
                   </p>
-                  <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
+                  <Button
+                    onClick={handlePayNow}
+                    className="bg-gradient-success text-success-foreground"
+                  >
                     Pay Now
                   </Button>
                 </CardContent>
@@ -654,7 +782,9 @@ const StudentDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Personal Information */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">Personal Information</h3>
+                    <h3 className="font-semibold text-foreground">
+                      Personal Information
+                    </h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
@@ -669,7 +799,9 @@ const StudentDashboard = () => {
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Gender:</span>
-                        <span className="capitalize">{studentData?.personalInfo?.gender ?? ""}</span>
+                        <span className="capitalize">
+                          {studentData?.personalInfo?.gender ?? ""}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -679,16 +811,24 @@ const StudentDashboard = () => {
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Phone:</span>
-                        <span>{studentData?.personalInfo?.contactNumber ?? ""}</span>
+                        <span>
+                          {studentData?.personalInfo?.contactNumber ?? ""}
+                        </span>
                       </div>
                       <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <span className="font-medium">Address:</span>
                         <span>
-                          {(studentData?.personalInfo?.address ?? "")}
-                          {studentData?.personalInfo?.city ? `, ${studentData.personalInfo.city}` : ""}
-                          {studentData?.personalInfo?.state ? `, ${studentData.personalInfo.state}` : ""}
-                          {studentData?.personalInfo?.postalCode ? ` - ${studentData.personalInfo.postalCode}` : ""}
+                          {studentData?.personalInfo?.address ?? ""}
+                          {studentData?.personalInfo?.city
+                            ? `, ${studentData.personalInfo.city}`
+                            : ""}
+                          {studentData?.personalInfo?.state
+                            ? `, ${studentData.personalInfo.state}`
+                            : ""}
+                          {studentData?.personalInfo?.postalCode
+                            ? ` - ${studentData.personalInfo.postalCode}`
+                            : ""}
                         </span>
                       </div>
                     </div>
@@ -696,7 +836,9 @@ const StudentDashboard = () => {
 
                   {/* School Information */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">School Information</h3>
+                    <h3 className="font-semibold text-foreground">
+                      School Information
+                    </h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <School className="h-4 w-4 text-muted-foreground" />
@@ -719,9 +861,13 @@ const StudentDashboard = () => {
                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <span className="font-medium">School Address:</span>
                         <span>
-                          {(studentData?.schoolInfo?.schoolAddress ?? "")}
-                          {studentData?.schoolInfo?.schoolCity ? `, ${studentData.schoolInfo.schoolCity}` : ""}
-                          {studentData?.schoolInfo?.schoolState ? `, ${studentData.schoolInfo.schoolState}` : ""}
+                          {studentData?.schoolInfo?.schoolAddress ?? ""}
+                          {studentData?.schoolInfo?.schoolCity
+                            ? `, ${studentData.schoolInfo.schoolCity}`
+                            : ""}
+                          {studentData?.schoolInfo?.schoolState
+                            ? `, ${studentData.schoolInfo.schoolState}`
+                            : ""}
                         </span>
                       </div>
                     </div>
@@ -730,7 +876,9 @@ const StudentDashboard = () => {
 
                 {/* Account Settings */}
                 <div className="mt-8 pt-6 border-t">
-                  <h3 className="font-semibold text-foreground mb-4">Account Settings</h3>
+                  <h3 className="font-semibold text-foreground mb-4">
+                    Account Settings
+                  </h3>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button variant="outline" onClick={handlePasswordChange}>
                       <Lock className="h-4 w-4 mr-2" />
@@ -741,7 +889,10 @@ const StudentDashboard = () => {
                       Logout
                     </Button>
                     {!isPaid && (
-                      <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
+                      <Button
+                        onClick={handlePayNow}
+                        className="bg-gradient-success text-success-foreground"
+                      >
                         Pay Now
                       </Button>
                     )}

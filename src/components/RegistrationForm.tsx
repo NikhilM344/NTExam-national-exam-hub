@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLoadingContext } from "@/context/LoadingContext";
+
 import PersonalInfoStep from "./registration/PersonalInfo";
 import SchoolInfoStep from "./registration/SchoolInfo";
 // import ExamDetailsStep from "./registration/ExamDetails";
@@ -23,8 +24,72 @@ import {
   ParentInfo,
   calculateFees,
 } from "@/utils/registrationUtils";
+
 import { supabase } from "@/lib/supabase";
 import bcrypt from "bcryptjs";
+
+/**
+ * Subject auto-mapper
+ * --------------------------------------------------
+ * - Grades 2–10 → ["Maths","Science","Hindi","English"]
+ * - 11/12 Arts → ["History","Economics","Geography","Psychology","Sociology","Hindi","English"]
+ * - 11/12 Commerce → ["Accountancy","Business Studies","Economics","English"]
+ * - 11/12 Science PCB → ["Physics","Chemistry","Biology","Hindi","English"]
+ * - 11/12 Science PCM → ["Physics","Chemistry","Mathematics","Hindi","English"]
+ */
+function parseGrade(raw: string | undefined) {
+  const s = (raw || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+  // Extract numeric grade if present
+  const numMatch = s.match(/\b(2|3|4|5|6|7|8|9|10|11|12)\b/);
+  const gradeNum = numMatch ? parseInt(numMatch[1], 10) : undefined;
+
+  const isArts = /\barts?\b/.test(s);
+  const isCommerce = /\bcommerce\b/.test(s);
+  const isScience = /\bscience\b/.test(s);
+  const isPCB = /\bpcb\b/.test(s) || /\bbiology\b/.test(s);
+  const isPCM = /\bpcm\b/.test(s) || /\b(mathematics|maths)\b/.test(s);
+
+  return { gradeNum, isArts, isCommerce, isScience, isPCB, isPCM, raw: s };
+}
+
+function subjectsForClass(classGrade: string | undefined): string[] {
+  const { gradeNum, isArts, isCommerce, isScience, isPCB, isPCM } = parseGrade(classGrade);
+
+  // 2–10
+  if (gradeNum && gradeNum >= 2 && gradeNum <= 10) {
+    return ["Maths", "Science", "Hindi", "English"];
+  }
+
+  // 11/12 streams
+  if (gradeNum && (gradeNum === 11 || gradeNum === 12)) {
+    if (isArts) {
+      return [
+        "History",
+        "Economics",
+        "Geography",
+        "Psychology",
+        "Sociology",
+        "Hindi",
+        "English",
+      ];
+    }
+    if (isCommerce) {
+      return ["Accountancy", "Business Studies", "Economics", "English"];
+    }
+    if (isScience && isPCB) {
+      return ["Physics", "Chemistry", "Biology", "Hindi", "English"];
+    }
+    if (isScience && isPCM) {
+      return ["Physics", "Chemistry", "Mathematics", "Hindi", "English"];
+    }
+    // If 'science' but not specified, leave empty or choose a default.
+    if (isScience) return [];
+  }
+
+  // Unknown → empty list
+  return [];
+}
 
 const RegistrationForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,8 +107,8 @@ const RegistrationForm = () => {
       state: "",
       postalCode: "",
       contactNumber: "",
-      email: "",
-      password: "", // NEW
+      email: "",        // OPTIONAL
+      password: "",     // REQUIRED (min 6)
     },
     schoolInfo: {
       schoolName: "",
@@ -51,11 +116,11 @@ const RegistrationForm = () => {
       schoolCity: "",
       schoolState: "",
       schoolPostalCode: "",
-      classGrade: "",
+      classGrade: "",   // ← auto-subjects depend on this
       rollNumber: "",
     },
     examDetails: {
-      subjects: [],
+      subjects: [],     // ← will be auto-filled
       examCenter: "",
       examDate: "",
     },
@@ -74,81 +139,59 @@ const RegistrationForm = () => {
     { number: 1, title: "Personal Info", description: "Basic information" },
     { number: 2, title: "School Info", description: "School details" },
     // { number: 3, title: "Exam Details", description: "Subject selection" },
-    { number: 3, title: "Undertaking", description: "Policy" },
+    { number: 3, title: "Undertaking", description: "Parent/Guardian & Policy" },
   ];
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {};
 
     switch (step) {
-      case 1:
-        if (!formData.personalInfo.fullName.trim())
-          newErrors.fullName = "Full name is required";
-        if (!formData.personalInfo.dateOfBirth)
-          newErrors.dateOfBirth = "Date of birth is required";
-        if (!formData.personalInfo.gender)
-          newErrors.gender = "Gender is required";
-        if (!formData.personalInfo.address.trim())
-          newErrors.address = "Address is required";
-        if (!formData.personalInfo.city.trim())
-          newErrors.city = "City is required";
-        if (!formData.personalInfo.state) newErrors.state = "State is required";
-        if (!formData.personalInfo.postalCode.trim())
-          newErrors.postalCode = "Postal code is required";
-        if (!formData.personalInfo.contactNumber.trim())
-          newErrors.contactNumber = "Contact number is required";
-        if (!formData.personalInfo.email.trim())
-          newErrors.email = "Email is required";
-        if (
-          formData.personalInfo.email &&
-          !/\S+@\S+\.\S+/.test(formData.personalInfo.email)
-        ) {
-          newErrors.email = "Invalid email format";
-          if (!formData.personalInfo.password.trim())
-            newErrors.password = "Password is required";
-          if (
-            formData.personalInfo.password &&
-            formData.personalInfo.password.length < 6
-          ) {
-            newErrors.password = "Password must be at least 6 characters";
-          }
+      case 1: {
+        const p = formData.personalInfo;
+        if (!p.fullName.trim()) newErrors.fullName = "Full name is required";
+        if (!p.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+        if (!p.gender) newErrors.gender = "Gender is required";
+        if (!p.address.trim()) newErrors.address = "Address is required";
+        if (!p.city.trim()) newErrors.city = "City is required";
+        if (!p.state) newErrors.state = "State is required";
+        if (!p.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+
+        if (!p.contactNumber.trim()) {
+          newErrors.contactNumber = "Mobile number is required";
+        } else {
+          const digits = p.contactNumber.replace(/\D/g, "");
+          if (digits.length < 10) newErrors.contactNumber = "Enter a valid mobile number";
         }
+
+        if (p.email.trim().length > 0) {
+          const ok = /\S+@\S+\.\S+/.test(p.email);
+          if (!ok) newErrors.email = "Invalid email format";
+        }
+
+        if (!p.password.trim()) newErrors.password = "Password is required";
+        else if (p.password.length < 6)
+          newErrors.password = "Password must be at least 6 characters";
         break;
+      }
 
-      case 2:
-        if (!formData.schoolInfo.schoolName.trim())
-          newErrors.schoolName = "School name is required";
-        if (!formData.schoolInfo.schoolAddress.trim())
-          newErrors.schoolAddress = "School address is required";
-        // if (!formData.schoolInfo.schoolCity.trim())
-        //   newErrors.schoolCity = "School city is required";
-        // if (!formData.schoolInfo.schoolState)
-        //   newErrors.schoolState = "School state is required";
-        // if (!formData.schoolInfo.schoolPostalCode.trim())
-        //   newErrors.schoolPostalCode = "School postal code is required";
-        if (!formData.schoolInfo.classGrade)
-          newErrors.classGrade = "Class/Grade is required";
+      case 2: {
+        const s = formData.schoolInfo;
+        if (!s.schoolName.trim()) newErrors.schoolName = "School name is required";
+        if (!s.schoolAddress.trim()) newErrors.schoolAddress = "School address is required";
+        if (!s.classGrade) newErrors.classGrade = "Class/Grade is required";
         break;
+      }
 
-      // case 3:
-      //   if (formData.examDetails.subjects.length === 0)
-      //     newErrors.subjects = "Please select at least one subject";
-      //   break;
-
-      case 3:
-        if (!formData.parentInfo.parentName.trim())
-          newErrors.parentName = "Parent/Guardian name is required";
-        if (!formData.parentInfo.parentContactNumber.trim())
+      case 3: {
+        const g = formData.parentInfo;
+        if (!g.parentName.trim()) newErrors.parentName = "Parent/Guardian name is required";
+        if (!g.parentContactNumber.trim())
           newErrors.parentContactNumber = "Parent contact number is required";
-        if (!formData.parentInfo.parentEmail.trim())
-          newErrors.parentEmail = "Parent email is required";
-        if (
-          formData.parentInfo.parentEmail &&
-          !/\S+@\S+\.\S+/.test(formData.parentInfo.parentEmail)
-        ) {
+        if (!g.parentEmail.trim()) newErrors.parentEmail = "Parent email is required";
+        else if (!/\S+@\S+\.\S+/.test(g.parentEmail))
           newErrors.parentEmail = "Invalid email format";
-        }
         break;
+      }
     }
 
     setErrors(newErrors);
@@ -156,91 +199,28 @@ const RegistrationForm = () => {
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => prev + 1);
-    }
+    if (validateStep(currentStep)) setCurrentStep((prev) => prev + 1);
   };
 
-  const handlePrevious = () => {
-    setCurrentStep((prev) => prev - 1);
+  const handlePrevious = () => setCurrentStep((prev) => prev - 1);
+
+  // 🔁 When School Info is updated, recompute subjects based on classGrade
+  const updateSchoolInfo = (data: SchoolInfo) => {
+    setFormData((prev) => {
+      const newSubjects = subjectsForClass(data.classGrade);
+      return {
+        ...prev,
+        schoolInfo: data,
+        examDetails: {
+          ...prev.examDetails,
+          subjects: newSubjects, // auto-set
+        },
+      };
+    });
   };
-
-
-const handleSubmit = async () => {
-  if (!formData.termsAccepted) { /* toast + return */ }
-
-  try {
-    setIsSubmitting(true);
-    startLoading("Processing your registration...", "study");
-
-    const email = formData.personalInfo.email.trim().toLowerCase();
-    const rawPassword = formData.personalInfo.password;
-    const password_hash = await bcrypt.hash(rawPassword, 10);
-    const fees = calculateFees(formData.personalInfo.gender);
-    const id = crypto.randomUUID();
-
-    const row = {
-      id,
-      full_name: formData.personalInfo.fullName,
-      date_of_birth: formData.personalInfo.dateOfBirth,
-      gender: formData.personalInfo.gender,
-      address: formData.personalInfo.address,
-      city: formData.personalInfo.city,
-      state: formData.personalInfo.state,
-      postal_code: formData.personalInfo.postalCode,
-      contact_number: formData.personalInfo.contactNumber,
-      email, // lowercase
-      school_name: formData.schoolInfo.schoolName,
-      school_address: formData.schoolInfo.schoolAddress,
-      // school_city: formData.schoolInfo.schoolCity,
-      // school_state: formData.schoolInfo.schoolState,
-      // school_postal_code: formData.schoolInfo.schoolPostalCode,
-      class_grade: formData.schoolInfo.classGrade,
-      roll_number: formData.schoolInfo.rollNumber,
-      subjects: formData.examDetails.subjects,
-      exam_center: formData.examDetails.examCenter,
-      exam_date: formData.examDetails.examDate || null,
-      parent_name: formData.parentInfo.parentName,
-      parent_contact_number: formData.parentInfo.parentContactNumber,
-      parent_email: formData.parentInfo.parentEmail,
-      terms_accepted: formData.termsAccepted,
-      fees,
-      password_hash,     // only the hash
-      // is_paid: false    // include if you still keep this column; otherwise omit
-    };
-
-    const { error } = await supabase.from("registrations").insert([row]);
-    if (error) throw error;
-
-    stopLoading();
-    setIsSubmitting(false);
-
-    localStorage.setItem("registrationId", id);
-    localStorage.setItem("examFees", String(fees));
-    localStorage.setItem(
-      "registrationData",
-      JSON.stringify({ ...formData, password: rawPassword })
-    );
-
-    toast({ title: "Registration Successful!", description: `Redirecting to payment (₹${fees})...` });
-    setTimeout(() => {
-      startLoading("Redirecting to payment...", "book");
-      window.location.href = "/payment";
-    }, 1200);
-  } catch (err: any) {
-    stopLoading();
-    setIsSubmitting(false);
-    toast({ title: "Registration failed", description: err?.message || "Please try again.", variant: "destructive" });
-  }
-};
-
 
   const updatePersonalInfo = (data: PersonalInfo) => {
     setFormData((prev) => ({ ...prev, personalInfo: data }));
-  };
-
-  const updateSchoolInfo = (data: SchoolInfo) => {
-    setFormData((prev) => ({ ...prev, schoolInfo: data }));
   };
 
   const updateExamDetails = (data: ExamDetails) => {
@@ -249,6 +229,101 @@ const handleSubmit = async () => {
 
   const updateParentInfo = (data: ParentInfo) => {
     setFormData((prev) => ({ ...prev, parentInfo: data }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.termsAccepted) {
+      toast({
+        title: "Please accept terms",
+        description: "You must accept the Terms & Conditions to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      startLoading("Processing your registration...");
+
+      const p = formData.personalInfo;
+      const s = formData.schoolInfo;
+      const g = formData.parentInfo;
+
+      const phone = (p.contactNumber || "").trim();
+      const email = p.email?.trim() ? p.email.trim().toLowerCase() : null;
+      const password_hash = await bcrypt.hash(p.password, 10);
+      const fees = calculateFees(p.gender);
+      const id = crypto.randomUUID();
+
+      const subjects = Array.isArray(formData.examDetails.subjects)
+        ? formData.examDetails.subjects
+        : [];
+
+      const payload = {
+        id,
+        full_name: p.fullName,
+        date_of_birth: p.dateOfBirth,
+        gender: p.gender,
+        address: p.address,
+        city: p.city,
+        state: p.state,
+        postal_code: p.postalCode,
+        contact_number: phone,
+        email,
+        school_name: s.schoolName,
+        school_address: s.schoolAddress,
+        class_grade: s.classGrade,
+        roll_number: s.rollNumber || null,
+
+        subjects,                 // ← auto-filled list
+        exam_center: null,
+        exam_date: null,
+
+        parent_name: g.parentName,
+        parent_contact_number: g.parentContactNumber,
+        parent_email: g.parentEmail,
+
+        terms_accepted: formData.termsAccepted,
+        fees,
+        is_paid: false,
+
+        password_hash,
+      };
+
+      const { data, error } = await supabase
+        .from("registrations")
+        .insert([payload])
+        .select("id")
+        .single();
+
+      if (error) {
+        if ((error as any).code === "23505") {
+          throw new Error("This mobile number is already registered.");
+        }
+        throw error;
+      }
+
+      const registrationId = data.id;
+
+      localStorage.setItem("registrationId", registrationId);
+      localStorage.setItem("examFees", String(fees));
+      localStorage.setItem("registrationData", JSON.stringify(formData));
+
+      stopLoading();
+      setIsSubmitting(false);
+
+      toast({ title: "Registration Successful!", description: "Redirecting to payment..." });
+
+      window.location.href = "/payment";
+    } catch (err: any) {
+      stopLoading();
+      setIsSubmitting(false);
+      toast({
+        title: "Registration failed",
+        description: err?.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderStep = () => {
@@ -265,7 +340,7 @@ const handleSubmit = async () => {
         return (
           <SchoolInfoStep
             data={formData.schoolInfo}
-            onUpdate={updateSchoolInfo}
+            onUpdate={updateSchoolInfo} // auto-sets subjects when class changes
             errors={errors}
           />
         );
@@ -313,16 +388,12 @@ const handleSubmit = async () => {
               <div className="ml-3 text-left">
                 <p
                   className={`text-sm font-medium ${
-                    currentStep >= step.number
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                    currentStep >= step.number ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
                   {step.title}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {step.description}
-                </p>
+                <p className="text-xs text-muted-foreground">{step.description}</p>
               </div>
               {index < steps.length - 1 && (
                 <div
@@ -362,8 +433,8 @@ const handleSubmit = async () => {
                   I accept the Terms & Conditions *
                 </label>
                 <p className="text-xs text-muted-foreground">
-                  By registering, you agree to our terms of service, privacy
-                  policy, and examination guidelines.
+                  By registering, you agree to our terms of service, privacy policy, and
+                  examination guidelines.
                 </p>
               </div>
             </div>
@@ -419,17 +490,11 @@ const handleSubmit = async () => {
         <div className="flex items-start gap-2">
           <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-foreground mb-1">
-              Important Information:
-            </h4>
+            <h4 className="font-semibold text-foreground mb-1">Important Information:</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-
               <li>• Registration fees: Boys ₹350, Girls ₹250</li>
               <li>• Payment must be completed to confirm your registration</li>
-              <li>
-                • You will receive login credentials via email after successful
-                payment
-              </li>
+              <li>• You will be redirected to the secure payment page after submission</li>
             </ul>
           </div>
         </div>

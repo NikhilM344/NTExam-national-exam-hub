@@ -1,173 +1,138 @@
-import { Building, MapPin, GraduationCap, Hash } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SchoolInfo, states, classes } from '@/utils/registrationUtils';
+import * as React from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { SchoolInfo } from "@/utils/registrationUtils";
 
-interface SchoolInfoStepProps {
+type Props = {
   data: SchoolInfo;
-  onUpdate: (data: SchoolInfo) => void;
-  errors: Record<string, string>;
-}
-
-const SchoolInfoStep = ({ data, onUpdate, errors }: SchoolInfoStepProps) => {
-  const handleInputChange = (field: keyof SchoolInfo, value: string) => {
-    onUpdate({
-      ...data,
-      [field]: value
-    });
-  };
-
-  return (
-    <Card className="shadow-card bg-gradient-card border-0">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Building className="h-6 w-6 text-primary" />
-          School Information
-        </CardTitle>
-        <p className="text-muted-foreground">Please provide your school details accurately</p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* School Name */}
-        <div className="space-y-2">
-          <Label htmlFor="schoolName" className="text-sm font-medium text-foreground">
-            Name of the School *
-          </Label>
-          <Input
-            id="schoolName"
-            type="text"
-            value={data.schoolName}
-            onChange={(e) => handleInputChange('schoolName', e.target.value)}
-            placeholder="Enter your school name"
-            className={`bg-background ${errors.schoolName ? 'border-destructive' : 'border-border'}`}
-          />
-          {errors.schoolName && <p className="text-sm text-destructive">{errors.schoolName}</p>}
-        </div>
-
-        {/* School Address */}
-        <div className="space-y-2">
-          <Label htmlFor="schoolAddress" className="text-sm font-medium text-foreground flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            School Address *
-          </Label>
-          <Input
-            id="schoolAddress"
-            type="text"
-            value={data.schoolAddress}
-            onChange={(e) => handleInputChange('schoolAddress', e.target.value)}
-            placeholder="Enter complete school address"
-            className={`bg-background ${errors.schoolAddress ? 'border-destructive' : 'border-border'}`}
-          />
-          {errors.schoolAddress && <p className="text-sm text-destructive">{errors.schoolAddress}</p>}
-        </div>
-
-        {/* School City, State, Postal Code
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="schoolCity" className="text-sm font-medium text-foreground">
-              School City *
-            </Label>
-            <Input
-              id="schoolCity"
-              type="text"
-              value={data.schoolCity}
-              onChange={(e) => handleInputChange('schoolCity', e.target.value)}
-              placeholder="City"
-              className={`bg-background ${errors.schoolCity ? 'border-destructive' : 'border-border'}`}
-            />
-            {errors.schoolCity && <p className="text-sm text-destructive">{errors.schoolCity}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              School State *
-            </Label>
-            <Select value={data.schoolState} onValueChange={(value) => handleInputChange('schoolState', value)}>
-              <SelectTrigger className={`bg-background ${errors.schoolState ? 'border-destructive' : 'border-border'}`}>
-                <SelectValue placeholder="Select state" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {states.map((state) => (
-                  <SelectItem key={state} value={state}>
-                    {state}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.schoolState && <p className="text-sm text-destructive">{errors.schoolState}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="schoolPostalCode" className="text-sm font-medium text-foreground">
-              School Postal Code *
-            </Label>
-            <Input
-              id="schoolPostalCode"
-              type="text"
-              value={data.schoolPostalCode}
-              onChange={(e) => handleInputChange('schoolPostalCode', e.target.value)}
-              placeholder="PIN Code"
-              className={`bg-background ${errors.schoolPostalCode ? 'border-destructive' : 'border-border'}`}
-            />
-            {errors.schoolPostalCode && <p className="text-sm text-destructive">{errors.schoolPostalCode}</p>}
-          </div>
-        </div> */}
-
-        {/* Class and Roll Number */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              Class/Grade *
-            </Label>
-            <Select value={data.classGrade} onValueChange={(value) => handleInputChange('classGrade', value)}>
-              <SelectTrigger className={`bg-background ${errors.classGrade ? 'border-destructive' : 'border-border'}`}>
-                <SelectValue placeholder="Select your class" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((className) => (
-                  <SelectItem key={className} value={className}>
-                    {className}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.classGrade && <p className="text-sm text-destructive">{errors.classGrade}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="rollNumber" className="text-sm font-medium text-foreground flex items-center gap-2">
-              <Hash className="h-4 w-4 text-primary" />
-              Roll Number (if applicable)
-            </Label>
-            <Input
-              id="rollNumber"
-              type="text"
-              value={data.rollNumber || ''}
-              onChange={(e) => handleInputChange('rollNumber', e.target.value)}
-              placeholder="Enter your roll number (optional)"
-              className="bg-background border-border"
-            />
-            <p className="text-xs text-muted-foreground">
-              Leave blank if your school doesn't use roll numbers
-            </p>
-          </div>
-        </div>
-
-        {/* Information Note */}
-        <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-success">
-          <h4 className="font-semibold text-foreground mb-2">Why do we need school information?</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• To verify your academic credentials</li>
-            <li>• To send exam-related communications to your school</li>
-            <li>• To maintain accurate records for certification</li>
-            <li>• To coordinate with educational institutions</li>
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  onUpdate: (next: SchoolInfo) => void;
+  errors?: Record<string, string>;
 };
 
-export default SchoolInfoStep;
+const CLASS_OPTIONS: { label: string; value: string }[] = [
+  // 2–10 (Class 1 removed)
+  { label: "Class 2", value: "2" },
+  { label: "Class 3", value: "3" },
+  { label: "Class 4", value: "4" },
+  { label: "Class 5", value: "5" },
+  { label: "Class 6", value: "6" },
+  { label: "Class 7", value: "7" },
+  { label: "Class 8", value: "8" },
+  { label: "Class 9", value: "9" },
+  { label: "Class 10", value: "10" },
+
+  // 11th streams
+  { label: "Class 11 – Arts", value: "11 arts" },
+  { label: "Class 11 – Commerce", value: "11 commerce" },
+  { label: "Class 11 – Science (PCB)", value: "11 science pcb" },
+  { label: "Class 11 – Science (PCM)", value: "11 science pcm" },
+
+  // 12th streams
+  { label: "Class 12 – Arts", value: "12 arts" },
+  { label: "Class 12 – Commerce", value: "12 commerce" },
+  { label: "Class 12 – Science (PCB)", value: "12 science pcb" },
+  { label: "Class 12 – Science (PCM)", value: "12 science pcm" },
+];
+
+export default function SchoolInfoStep({ data, onUpdate, errors = {} }: Props) {
+  const handleChange =
+    (field: keyof SchoolInfo) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      onUpdate({ ...data, [field]: e.target.value });
+    };
+
+  return (
+    <div className="space-y-6">
+      {/* School Name */}
+      <div className="space-y-2">
+        <Label htmlFor="schoolName">School Name</Label>
+        <Input
+          id="schoolName"
+          placeholder="e.g., Navoday Public School"
+          value={data.schoolName}
+          onChange={handleChange("schoolName")}
+        />
+        {errors.schoolName && (
+          <p className="text-sm text-red-600">{errors.schoolName}</p>
+        )}
+      </div>
+
+      {/* School Address */}
+      <div className="space-y-2">
+        <Label htmlFor="schoolAddress">School Address</Label>
+        <Input
+          id="schoolAddress"
+          placeholder="Street, Area"
+          value={data.schoolAddress}
+          onChange={handleChange("schoolAddress")}
+        />
+        {errors.schoolAddress && (
+          <p className="text-sm text-red-600">{errors.schoolAddress}</p>
+        )}
+      </div>
+
+      {/* City / State / Postal Code
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="schoolCity">City</Label>
+          <Input
+            id="schoolCity"
+            value={data.schoolCity || ""}
+            onChange={handleChange("schoolCity")}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="schoolState">State</Label>
+          <Input
+            id="schoolState"
+            value={data.schoolState || ""}
+            onChange={handleChange("schoolState")}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="schoolPostalCode">Postal Code</Label>
+          <Input
+            id="schoolPostalCode"
+            value={data.schoolPostalCode || ""}
+            onChange={handleChange("schoolPostalCode")}
+          />
+        </div>
+      </div> */}
+
+      {/* Class / Stream */}
+      <div className="space-y-2">
+        <Label htmlFor="classGrade">Class / Stream</Label>
+        <select
+          id="classGrade"
+          className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+          value={(data.classGrade || "").toLowerCase()}
+          onChange={(e) => onUpdate({ ...data, classGrade: e.target.value })}
+        >
+          <option value="">Select Class / Stream</option>
+          {CLASS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        {errors.classGrade && (
+          <p className="text-sm text-red-600">{errors.classGrade}</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          Subjects will be set automatically based on your selection.
+        </p>
+      </div>
+
+      {/* Roll Number (optional) */}
+      <div className="space-y-2">
+        <Label htmlFor="rollNumber">Roll Number (optional)</Label>
+        <Input
+          id="rollNumber"
+          placeholder="Enter your roll number"
+          value={data.rollNumber || ""}
+          onChange={handleChange("rollNumber")}
+        />
+      </div>
+    </div>
+  );
+}

@@ -187,14 +187,23 @@ const Payment = () => {
         });
 
       if (orderErr || !orderData?.ok) {
-        setIsProcessing(false);
-        toast({
-          title: "Payment Error",
-          description: orderErr?.message || "Could not create payment order. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+  console.error("create-order failed:", { orderErr, orderData });
+  setIsProcessing(false);
+  const serverMsg =
+    (orderData as any)?.error ||
+    (orderErr as any)?.message ||
+    "Could not create payment order.";
+  const serverDetail = (orderData as any)?.detail
+    ? ` (${JSON.stringify((orderData as any).detail)})`
+    : "";
+  toast({
+    title: "Payment Error",
+    description: `${serverMsg}${serverDetail}`,
+    variant: "destructive",
+  });
+  return;
+}
+
 
       // 5) Configure & open Razorpay Checkout
       const options: any = {

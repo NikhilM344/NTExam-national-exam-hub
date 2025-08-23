@@ -1,8 +1,11 @@
 import { Trophy, Star, Award, Crown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 const WinnersSection = () => {
+  const navigate = useNavigate();
+
   const winners = [
     {
       id: 1,
@@ -56,7 +59,7 @@ const WinnersSection = () => {
       position: "1st",
       score: "94/100",
       school: "DAV Public School",
-      image: "data:image/jpeg;base64,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",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgXYPrd5BzTne5K7hW24V8IFolUqSPUXOXrZtv-0tQgVJ-m0yIhJOCCdo&s",
       badge: "Gold Medal"
     },
     {
@@ -209,10 +212,16 @@ const WinnersSection = () => {
               prizes, and recognition on our platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl group">
+              {/* ✅ Navigate to /registration on click */}
+              <button
+                onClick={() => navigate('/registration')}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl group inline-flex items-center justify-center"
+              >
                 <Trophy className="h-5 w-5 inline mr-2 group-hover:rotate-12 transition-transform" />
                 Register for Exams
               </button>
+
+              {/* Keep as button or turn into a Link if you have a winners page */}
               <button className="border-2 border-primary/30 bg-card/50 text-primary hover:bg-primary hover:text-primary-foreground px-8 py-4 rounded-xl font-semibold transition-all duration-300 backdrop-blur-sm">
                 View All Winners
               </button>

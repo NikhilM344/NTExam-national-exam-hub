@@ -1,7 +1,7 @@
-// Deno / Supabase Edge Function
-// Creates a Razorpay order and stores order_id on the "registrations" row.
+/// <reference lib="deno.ns" />
+/// <reference lib="deno.window" />
+/// <reference lib="dom" />
 
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -11,82 +11,86 @@ const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-const corsHeaders: HeadersInit = {
+const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Vary": "Origin",
-  "Content-Type": "application/json",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
-function json(data: unknown, init: ResponseInit = {}) {
-  const headers = new Headers(init.headers ?? {});
-  for (const [k, v] of Object.entries(corsHeaders)) headers.set(k, v);
-  return new Response(JSON.stringify(data), { ...init, headers });
+function fallbackFee(gender: string | null | undefined) {
+  const g = (gender || "").toLowerCase();
+  return g === "female" ? 250 : 350; // adjust if your pricing differs
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders, status: 204 });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { registrationId } = await req.json().catch(() => ({}));
-    if (!registrationId) return json({ error: "registrationId required" }, { status: 400 });
-
-    const { data: reg, error: fetchErr } = await supabase
-      .from("registrations")
-      .select("*")
-      .eq("id", registrationId)
-      .maybeSingle();
-
-    if (fetchErr) return json({ error: "Failed to fetch registration" }, { status: 500 });
-    if (!reg) return json({ error: "Registration not found" }, { status: 404 });
-    if (reg.is_paid === true || reg.payment_status === "paid") {
-      return json({ error: "Already paid" }, { status: 400 });
+    const { registrationId } = await req.json();
+    if (!registrationId) {
+      return new Response(JSON.stringify({ ok: false, error: "missing_registrationId" }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
 
-    const fees = Number(reg.fees ?? 0);
-    const amountInPaise = Math.max(1, Math.round(fees * 100)); // INR → paise
+    // Get fee & gender to compute amount (paise)
+    const { data: reg, error } = await supabase
+      .from("registrations")
+      .select("id, fees, gender")
+      .eq("id", registrationId)
+      .single();
 
+    if (error || !reg) {
+      return new Response(JSON.stringify({ ok: false, error: "registration_not_found" }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    const rupees =
+      typeof reg.fees === "number" && reg.fees > 0 ? reg.fees : fallbackFee(reg.gender);
+    const paise = rupees * 100;
+
+    // Create Razorpay order
     const orderRes = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Basic " + btoa(`${RZP_KEY_ID}:${RZP_KEY_SECRET}`),
+        "Authorization": "Basic " + btoa(`${RZP_KEY_ID}:${RZP_KEY_SECRET}`)
       },
       body: JSON.stringify({
-        amount: amountInPaise,
+        amount: paise,
         currency: "INR",
-        receipt: `reg_${registrationId}`,
-        payment_capture: 1,
-        notes: {
-          student_email: reg.email ?? "",
-          student_name: reg.full_name ?? "",
-        },
-      }),
+        receipt: registrationId,
+        notes: { registrationId }
+      })
     });
 
-    const orderData = await orderRes.json();
+    const orderJson = await orderRes.json();
+
     if (!orderRes.ok) {
-      console.error("Razorpay order error:", orderData);
-      return json({ error: "Failed to create order", details: orderData }, { status: 502 });
+      // Bubble up Razorpay message to the client for easy debugging
+      return new Response(JSON.stringify({ ok: false, error: "rzp_order_failed", detail: orderJson }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
 
-    const { error: upErr } = await supabase
+    // Store order id (optional but useful)
+    await supabase
       .from("registrations")
-      .update({ razorpay_order_id: orderData.id, payment_status: "pending" })
+      .update({ razorpay_order_id: orderJson.id, payment_status: "created" })
       .eq("id", registrationId);
-    if (upErr) return json({ error: "Failed to store order id" }, { status: 500 });
 
-    return json({
+    return new Response(JSON.stringify({
       ok: true,
       key_id: RZP_KEY_ID,
-      order_id: orderData.id,
-      amount: orderData.amount,     // paise
-      currency: orderData.currency, // "INR"
-    });
+      order_id: orderJson.id,
+      amount: orderJson.amount,
+      currency: orderJson.currency
+    }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
+
   } catch (e) {
-    console.error("Unexpected error:", e);
-    return json({ error: "Unexpected error" }, { status: 500 });
+    return new Response(JSON.stringify({ ok: false, error: "unexpected", detail: String(e) }), {
+      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders }
+    });
   }
 });

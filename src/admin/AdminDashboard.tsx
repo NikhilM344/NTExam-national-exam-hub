@@ -1,5 +1,5 @@
 // src/admin/AdminDashboard.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Eye,
@@ -10,6 +10,11 @@ import {
   CalendarDays,
   MapPin,
   Settings2,
+  Image as ImageIcon,
+  Upload,
+  Trash2,
+  Star,
+  StarOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,6 +76,15 @@ type ResultRow = {
   published_at?: string | null;
 };
 
+type GalleryImage = {
+  id: string;
+  title?: string | null;
+  url: string; // public URL (or storage path – we’ll normalize)
+  is_featured?: boolean | null;
+  created_at?: string | null;
+  storage_path?: string | null; // optional if you added it
+};
+
 export default function AdminDashboard() {
   const { toast } = useToast();
 
@@ -83,7 +97,7 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  /* ---------- State ---------- */
+  /* ---------- State (Registrations / Results) ---------- */
   const [loadingRegs, setLoadingRegs] = useState(false);
   const [regs, setRegs] = useState<Registration[]>([]);
   const [search, setSearch] = useState("");
@@ -109,6 +123,12 @@ export default function AdminDashboard() {
       center: "",
     }
   );
+
+  /* ---------- State (Gallery) ---------- */
+  const [galLoading, setGalLoading] = useState(false);
+  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [title, setTitle] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* ---------- Fetchers ---------- */
   const loadRegistrations = async () => {
@@ -141,9 +161,57 @@ export default function AdminDashboard() {
     }
   };
 
+  const normalizePublicUrl = (urlOrPath: string) => {
+    // If it's already a full public URL, return as-is
+    if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+      return { publicUrl: urlOrPath, storagePath: extractStoragePath(urlOrPath) };
+    }
+    // else treat it as a storage path inside 'gallery' bucket
+    const { data } = supabase.storage.from("gallery").getPublicUrl(urlOrPath);
+    return { publicUrl: data.publicUrl, storagePath: urlOrPath };
+  };
+
+  const extractStoragePath = (publicUrl: string) => {
+    // Works for public buckets: .../object/public/gallery/<path>
+    const marker = "/object/public/gallery/";
+    const idx = publicUrl.indexOf(marker);
+    if (idx >= 0) return publicUrl.substring(idx + marker.length);
+    // May be signed URL or different CDN format – fallback to last part
+    const parts = publicUrl.split("/");
+    return decodeURIComponent(parts.slice(4).join("/"));
+  };
+
+  const loadGallery = async () => {
+    setGalLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("gallery_images")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      const rows = (data || []) as GalleryImage[];
+      const normalized = rows.map((r) => {
+        const { publicUrl, storagePath } = normalizePublicUrl(r.url);
+        return { ...r, url: publicUrl, storage_path: r.storage_path || storagePath };
+      });
+      setGallery(normalized);
+    } catch (e: any) {
+      toast({
+        title: "Failed to load gallery",
+        description:
+          e?.message || "Ensure table 'gallery_images' exists and RLS allows select for admins.",
+        variant: "destructive",
+      });
+    } finally {
+      setGalLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadRegistrations();
     loadResults();
+    loadGallery();
   }, []);
 
   /* ---------- Derived ---------- */
@@ -163,7 +231,7 @@ export default function AdminDashboard() {
     return map;
   }, [results]);
 
-  /* ---------- Helpers / Actions ---------- */
+  /* ---------- Helpers / Actions (Registrations) ---------- */
   const viewDetails = (r: Registration) => {
     setSelected(r);
     setDetailOpen(true);
@@ -265,6 +333,85 @@ export default function AdminDashboard() {
     win.document.close();
   };
 
+  /* ---------- Helpers / Actions (Gallery) ---------- */
+  const onUploadClick = () => fileInputRef.current?.click();
+
+  const handleUploadFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setGalLoading(true);
+    try {
+      const tasks = Array.from(files).map(async (file) => {
+        const fileName = `${Date.now()}-${file.name}`.replace(/\s+/g, "_");
+        const { error: upErr } = await supabase.storage.from("gallery").upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (upErr) throw upErr;
+
+        const { data: pub } = supabase.storage.from("gallery").getPublicUrl(fileName);
+        const imageUrl = pub.publicUrl;
+
+        const { error: insErr } = await supabase.from("gallery_images").insert([
+          {
+            title: title?.trim() || file.name,
+            url: imageUrl, // storing public URL for simplicity
+            is_featured: false,
+          },
+        ]);
+        if (insErr) throw insErr;
+      });
+
+      await Promise.all(tasks);
+      setTitle("");
+      await loadGallery();
+      toast({ title: "Uploaded", description: "Images added to gallery." });
+    } catch (e: any) {
+      toast({
+        title: "Upload failed",
+        description: e?.message || "Check bucket/table policies.",
+        variant: "destructive",
+      });
+    } finally {
+      setGalLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const toggleFeatured = async (img: GalleryImage) => {
+    try {
+      const { error } = await supabase
+        .from("gallery_images")
+        .update({ is_featured: !img.is_featured })
+        .eq("id", img.id);
+      if (error) throw error;
+      await loadGallery();
+    } catch (e: any) {
+      toast({ title: "Failed to update", description: e?.message, variant: "destructive" });
+    }
+  };
+
+  const deleteImage = async (img: GalleryImage) => {
+    if (!confirm("Delete this image from gallery?")) return;
+    setGalLoading(true);
+    try {
+      // Try remove from storage (best-effort)
+      const path =
+        img.storage_path ||
+        extractStoragePath(img.url); // derive path if only URL available
+      if (path) {
+        await supabase.storage.from("gallery").remove([path]).catch(() => {});
+      }
+      const { error } = await supabase.from("gallery_images").delete().eq("id", img.id);
+      if (error) throw error;
+      await loadGallery();
+      toast({ title: "Deleted" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e?.message, variant: "destructive" });
+    } finally {
+      setGalLoading(false);
+    }
+  };
+
   /* ---------- UI ---------- */
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -294,6 +441,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="registrations">Registrations</TabsTrigger>
           <TabsTrigger value="exam-setup">Exam Setup</TabsTrigger>
           <TabsTrigger value="results">Results & Certificates</TabsTrigger>
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>{/* 👈 NEW */}
         </TabsList>
 
         {/* --- Registrations Tab --- */}
@@ -486,6 +634,103 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* --- Gallery Tab (Admin) --- */}
+        <TabsContent value="gallery" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Gallery Manager
+              </CardTitle>
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  placeholder="Optional title for next uploads"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-64"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUploadFiles(e.target.files)}
+                />
+                <Button onClick={onUploadClick} disabled={galLoading}>
+                  {galLoading ? (
+                    <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  Upload Images
+                </Button>
+                <Button variant="outline" onClick={loadGallery}>
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {galLoading && gallery.length === 0 ? (
+                <div className="py-10 text-center text-muted-foreground">Loading…</div>
+              ) : gallery.length === 0 ? (
+                <div className="py-10 text-center text-muted-foreground">No images yet. Upload some!</div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {gallery.map((img) => (
+                    <div key={img.id} className="rounded-md border overflow-hidden bg-card">
+                      <div className="relative aspect-video bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.url}
+                          alt={img.title || "Gallery image"}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        {img.is_featured ? (
+                          <span className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-yellow-500 text-black font-semibold">
+                            Featured
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="p-3 space-y-2">
+                        <div className="text-sm font-medium truncate">{img.title || "Untitled"}</div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleFeatured(img)}
+                            title={img.is_featured ? "Unfeature" : "Mark featured"}
+                          >
+                            {img.is_featured ? (
+                              <>
+                                <StarOff className="h-4 w-4 mr-1" /> Unfeature
+                              </>
+                            ) : (
+                              <>
+                                <Star className="h-4 w-4 mr-1" /> Feature
+                              </>
+                            )}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => deleteImage(img)}>
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <p className="text-xs text-muted-foreground">
+            Tip: On the public site, your <b>/gallery</b> page should read from the <code>gallery_images</code> table
+            (optionally only where <code>is_featured = true</code>). If your bucket is private, use signed URLs.
+          </p>
         </TabsContent>
       </Tabs>
 

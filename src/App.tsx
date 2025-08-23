@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,9 +19,12 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
 import AboutUs from "./pages/AboutUs";
 import CancellationRefund from "./pages/CancellationRefund";
+import Gallery from "./pages/Gallery";
+
+// Admin
 import AdminGuard from "@/admin/AdminGuard";
 import AdminDashboard from "@/admin/AdminDashboard";
-
+import AdminGallery from "@/admin/AdminGallery";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +36,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Index />} />
             <Route path="/registration" element={<Registration />} />
             <Route path="/payment" element={<Payment />} />
@@ -43,6 +48,9 @@ const App = () => (
             <Route path="/terms-conditions" element={<TermsConditions />} />
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/cancellation-refund" element={<CancellationRefund />} />
+            <Route path="/gallery" element={<Gallery />} />
+
+            {/* Admin routes */}
             <Route
               path="/admin"
               element={
@@ -51,6 +59,16 @@ const App = () => (
                 </AdminGuard>
               }
             />
+            <Route
+              path="/admin/gallery"
+              element={
+                <AdminGuard>
+                  <AdminGallery />
+                </AdminGuard>
+              }
+            />
+
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
