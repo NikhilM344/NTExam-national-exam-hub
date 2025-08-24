@@ -44,7 +44,7 @@ export interface RegistrationData {
 
 
 export const calculateFees = (gender: 'male' | 'female' | 'other'): number => {
-  return gender === 'female' ? 250 : 1;
+  return gender === 'female' ? 250 : 350;
 };
 
 export const states = [

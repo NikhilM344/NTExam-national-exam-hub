@@ -1,96 +1,122 @@
-/// <reference lib="deno.ns" />
-/// <reference lib="deno.window" />
-/// <reference lib="dom" />
+// Create a Razorpay order and return the key_id + order_id to the client.
+// - CORS enabled
+// - Uses LIVE or TEST creds based on env
+// - Reads DB row (registration) to get the fee
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildCorsHeaders, handleOptions } from '../_shared/cors.ts';
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RZP_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID")!;
-const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
+type ReqBody = { registrationId?: string };
+type ResBody =
+  | { ok: true; key_id: string; order_id: string; amount: number; currency: string }
+  | { ok: false; error: string; detail?: unknown };
 
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+// NOTE: Supabase injects SUPABASE_URL automatically.
+// SERVICE_ROLE_KEY must be set via `supabase secrets set SERVICE_ROLE_KEY=...`
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SERVICE_ROLE_KEY = Deno.env.get('SERVICE_ROLE_KEY')!;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+// Razorpay secrets: set these with `supabase secrets set ...`
+const USE_LIVE = (Deno.env.get('RAZORPAY_USE_LIVE') || '').toLowerCase() === 'true'
+  || (Deno.env.get('NODE_ENV') || '').toLowerCase() === 'production';
 
-function fallbackFee(gender: string | null | undefined) {
-  const g = (gender || "").toLowerCase();
-  return g === "female" ? 250 : 350; // adjust if your pricing differs
+const RZP_KEY_ID_LIVE = Deno.env.get('RAZORPAY_KEY_ID_LIVE');
+const RZP_KEY_SECRET_LIVE = Deno.env.get('RAZORPAY_KEY_SECRET_LIVE');
+const RZP_KEY_ID_TEST = Deno.env.get('RAZORPAY_KEY_ID_TEST');
+const RZP_KEY_SECRET_TEST = Deno.env.get('RAZORPAY_KEY_SECRET_TEST');
+
+function getRazorpayCreds() {
+  if (USE_LIVE) {
+    if (!RZP_KEY_ID_LIVE || !RZP_KEY_SECRET_LIVE) throw new Error('Missing LIVE Razorpay secrets');
+    return { key_id: RZP_KEY_ID_LIVE, key_secret: RZP_KEY_SECRET_LIVE };
+  }
+  if (!RZP_KEY_ID_TEST || !RZP_KEY_SECRET_TEST) throw new Error('Missing TEST Razorpay secrets');
+  return { key_id: RZP_KEY_ID_TEST, key_secret: RZP_KEY_SECRET_TEST };
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return handleOptions(req);
+
+  const cors = buildCorsHeaders(req.headers.get('origin'));
 
   try {
-    const { registrationId } = await req.json();
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ ok: false, error: 'Method not allowed' }), {
+        status: 405,
+        headers: { 'Content-Type': 'application/json', ...cors },
+      });
+    }
+
+    const { registrationId } = (await req.json()) as ReqBody;
     if (!registrationId) {
-      return new Response(JSON.stringify({ ok: false, error: "missing_registrationId" }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      return new Response(JSON.stringify({ ok: false, error: 'registrationId required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...cors },
       });
     }
 
-    // Get fee & gender to compute amount (paise)
-    const { data: reg, error } = await supabase
-      .from("registrations")
-      .select("id, fees, gender")
-      .eq("id", registrationId)
-      .single();
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const { data: row, error } = await supabase
+      .from('registrations')
+      .select('id, fees, gender')
+      .eq('id', registrationId)
+      .maybeSingle();
 
-    if (error || !reg) {
-      return new Response(JSON.stringify({ ok: false, error: "registration_not_found" }), {
-        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+    if (error || !row) {
+      return new Response(JSON.stringify({ ok: false, error: 'registration not found', detail: error }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', ...cors },
       });
     }
 
-    const rupees =
-      typeof reg.fees === "number" && reg.fees > 0 ? reg.fees : fallbackFee(reg.gender);
-    const paise = rupees * 100;
+    const fees = typeof row.fees === 'number' && row.fees > 0
+      ? row.fees
+      : (String(row.gender || '').toLowerCase() === 'female' ? 250 : 350);
+    const amountPaise = Math.round(fees * 100);
 
-    // Create Razorpay order
-    const orderRes = await fetch("https://api.razorpay.com/v1/orders", {
-      method: "POST",
+    const { key_id, key_secret } = getRazorpayCreds();
+
+    // Create order
+    const auth = 'Basic ' + btoa(`${key_id}:${key_secret}`);
+    const r = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Basic " + btoa(`${RZP_KEY_ID}:${RZP_KEY_SECRET}`)
+        'Authorization': auth,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: paise,
-        currency: "INR",
+        amount: amountPaise,
+        currency: 'INR',
         receipt: registrationId,
-        notes: { registrationId }
-      })
+        notes: { registrationId },
+        payment_capture: 1,
+      }),
     });
 
-    const orderJson = await orderRes.json();
-
-    if (!orderRes.ok) {
-      // Bubble up Razorpay message to the client for easy debugging
-      return new Response(JSON.stringify({ ok: false, error: "rzp_order_failed", detail: orderJson }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+    if (!r.ok) {
+      const text = await r.text().catch(() => '');
+      return new Response(JSON.stringify({ ok: false, error: 'razorpay order failed', detail: text }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...cors },
       });
     }
 
-    // Store order id (optional but useful)
-    await supabase
-      .from("registrations")
-      .update({ razorpay_order_id: orderJson.id, payment_status: "created" })
-      .eq("id", registrationId);
-
-    return new Response(JSON.stringify({
+    const data = await r.json();
+    const res: ResBody = {
       ok: true,
-      key_id: RZP_KEY_ID,
-      order_id: orderJson.id,
-      amount: orderJson.amount,
-      currency: orderJson.currency
-    }), { headers: { "Content-Type": "application/json", ...corsHeaders } });
-
+      key_id,
+      order_id: data.id,
+      amount: data.amount,
+      currency: data.currency || 'INR',
+    };
+    return new Response(JSON.stringify(res), {
+      headers: { 'Content-Type': 'application/json', ...cors },
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: "unexpected", detail: String(e) }), {
-      status: 500, headers: { "Content-Type": "application/json", ...corsHeaders }
+    const res: ResBody = { ok: false, error: (e as Error).message };
+    return new Response(JSON.stringify(res), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...cors },
     });
   }
 });

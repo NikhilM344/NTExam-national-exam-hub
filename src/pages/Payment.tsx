@@ -1,3 +1,4 @@
+// src/pages/Payment.tsx
 import { useState, useEffect } from "react";
 import { CreditCard, Shield, CheckCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,12 @@ declare global {
 
 type CreateOrderResponse = {
   ok: boolean;
-  key_id: string;
+  key_id: string;   // live or test key comes from your Edge Function
   order_id: string;
-  amount: number; // paise
+  amount: number;   // paise
   currency: string; // "INR"
+  error?: string;
+  detail?: unknown;
 };
 
 type VerifyResponse = {
@@ -85,10 +88,10 @@ async function markPaid(isPaid: boolean) {
   if (error) throw error;
 }
 
-/** Simple fee rule if row.fees is missing. Adjust as needed. */
+/** Fee rule — Boys ₹350, Girls ₹250. */
 function computeFallbackFee(gender?: string) {
   const g = (gender || "").toLowerCase();
-  return g === "female" ? 150 : 200; // <-- change these if your pricing differs
+  return g === "female" ? 250 : 350; // ✅ Boys 350
 }
 
 const Payment = () => {
@@ -128,7 +131,7 @@ const Payment = () => {
           }
         }
 
-        // Fallback: use any cached registrationData if available
+        // Fallback: use cached registrationData if available
         const storedData = localStorage.getItem("registrationData");
         if (storedData) {
           const parsed = JSON.parse(storedData);
@@ -149,7 +152,7 @@ const Payment = () => {
     try {
       setIsProcessing(true);
 
-      // 1) Load Razorpay SDK (runtime)
+      // 1) Load Razorpay SDK (same URL for test/live; the key returned decides mode)
       const ok = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
       if (!ok) {
         setIsProcessing(false);
@@ -180,35 +183,34 @@ const Payment = () => {
         /* ignore */
       }
 
-      // 4) Create order via Supabase Edge Function
+      // 4) Create order via Supabase Edge Function (must return LIVE key_id in prod)
       const { data: orderData, error: orderErr } =
         await supabase.functions.invoke<CreateOrderResponse>("razorpay-create-order", {
           body: { registrationId },
         });
 
       if (orderErr || !orderData?.ok) {
-  console.error("create-order failed:", { orderErr, orderData });
-  setIsProcessing(false);
-  const serverMsg =
-    (orderData as any)?.error ||
-    (orderErr as any)?.message ||
-    "Could not create payment order.";
-  const serverDetail = (orderData as any)?.detail
-    ? ` (${JSON.stringify((orderData as any).detail)})`
-    : "";
-  toast({
-    title: "Payment Error",
-    description: `${serverMsg}${serverDetail}`,
-    variant: "destructive",
-  });
-  return;
-}
-
+        console.error("create-order failed:", { orderErr, orderData });
+        setIsProcessing(false);
+        const serverMsg =
+          (orderData as any)?.error ||
+          (orderErr as any)?.message ||
+          "Could not create payment order.";
+        const serverDetail = (orderData as any)?.detail
+          ? ` (${JSON.stringify((orderData as any).detail)})`
+          : "";
+        toast({
+          title: "Payment Error",
+          description: `${serverMsg}${serverDetail}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
       // 5) Configure & open Razorpay Checkout
       const options: any = {
-        key: orderData.key_id,
-        amount: orderData.amount, // paise
+        key: orderData.key_id,                 // LIVE key returned by your function
+        amount: orderData.amount,              // paise
         currency: orderData.currency || "INR",
         name: "NTExam",
         description: "Exam Registration Fee",
@@ -224,7 +226,7 @@ const Payment = () => {
           try {
             const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = resp;
 
-            // 6) Verify on server
+            // 6) Verify on server (your function should set is_paid = true on success)
             const { data: verifyData, error: verifyErr } =
               await supabase.functions.invoke<VerifyResponse>("razorpay-verify", {
                 body: {
@@ -253,9 +255,7 @@ const Payment = () => {
             });
 
             localStorage.setItem("isPaid", "true");
-
-            // Optional cleanups: keep registrationId so dashboard can refetch fresh data
-            localStorage.removeItem("examFees");
+            localStorage.removeItem("examFees"); // cleanup
 
             setTimeout(() => {
               window.location.href = "/student-dashboard";

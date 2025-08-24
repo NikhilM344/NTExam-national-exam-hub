@@ -1,5 +1,5 @@
 // src/pages/StudentDashboard.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   User,
@@ -18,6 +18,7 @@ import {
   MapPin,
   ShieldAlert,
   RotateCw,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useLoadingContext } from "@/context/LoadingContext";
-// import AnnouncementBanner from "@/components/AnnouncementBanner";
+import { useNavigate } from "react-router-dom";
 
 /** Shape your UI expects */
 type StudentData = {
@@ -106,77 +107,160 @@ const StudentDashboard = () => {
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [activeTab, setActiveTab] =
     useState<"overview" | "documents" | "exams" | "profile">("profile");
+  const [noRegistrationMsg, setNoRegistrationMsg] = useState<string | null>(null);
 
   const { toast } = useToast();
   const { startLoading, stopLoading } = useLoadingContext();
+  const navigate = useNavigate();
 
-  // Try to load the registration row from DB:
-  // 1) by registrationId in localStorage (most reliable)
-  // 2) else by email (fallback if you allow it)
+  /** Resolve identity we can use to fetch (regId preferred, else email + legacy) */
+  const identity = useMemo(() => {
+    // 1) registrationId in localStorage or ?rid= in URL
+    const url = new URL(window.location.href);
+    const ridFromUrl = url.searchParams.get("rid") || "";
+    const regId =
+      (localStorage.getItem("registrationId") || "").trim() ||
+      ridFromUrl.trim();
+
+    // 2) current email in localStorage (set by Login)
+    let email = (localStorage.getItem("studentEmail") || "").trim();
+
+    // 3) fallback to legacy object if present
+    if (!email) {
+      try {
+        const legacy = localStorage.getItem("studentLogin");
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          email =
+            parsed?.studentData?.email ||
+            parsed?.email ||
+            parsed?.studentData?.personalInfo?.email ||
+            "";
+        }
+      } catch {}
+    }
+
+    return {
+      regId: regId || null,
+      email: email ? email.toLowerCase() : null,
+    };
+  }, []);
+
+  /** Fetch a single row by registration id */
+  const fetchById = async (id: string) => {
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) return null;
+    return data || null;
+  };
+
+  /** Fetch newest row by email (case-insensitive) */
+  const fetchByEmail = async (email: string) => {
+    const { data, error } = await supabase
+      .from("registrations")
+      .select("*")
+      .ilike("email", email) // case-insensitive
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) return null;
+    if (Array.isArray(data) && data.length > 0) return data[0];
+    return null;
+  };
+
+  /** Main loader */
   const loadFromDB = async () => {
     setIsLoading(true);
+    setNoRegistrationMsg(null);
+
     try {
-      const registrationId = localStorage.getItem("registrationId");
-      if (registrationId) {
-        const { data, error } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("id", registrationId)
-          .maybeSingle();
-        if (!error && data) {
-          setStudentData(toClientStudentData(data));
-          const paid = !!data.is_paid;
-          setIsPaid(paid);
-          setActiveTab(paid ? "overview" : "profile");
-          setIsLoading(false);
-          return { idUsed: registrationId as string };
+      let row: any = null;
+      let idUsed: string | null = null;
+
+      // Preferred: id
+      if (identity.regId) {
+        row = await fetchById(identity.regId);
+        if (row) {
+          idUsed = identity.regId;
         }
       }
 
-      // Fallback: use email if present
-      const loggedIn = localStorage.getItem("studentLoggedIn") === "true";
-      const email = (localStorage.getItem("studentEmail") || "").toLowerCase();
-      if (loggedIn && email) {
-        const { data, error } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("email", email)
-          .maybeSingle();
-        if (!error && data) {
-          setStudentData(toClientStudentData(data));
-          const paid = !!data.is_paid;
-          setIsPaid(paid);
-          setActiveTab(paid ? "overview" : "profile");
-          setIsLoading(false);
-          return { idUsed: data.id as string };
-        }
-      }
-
-      // Finally, try cached registrationData (purely for display; does NOT drive isPaid)
-      const reg = localStorage.getItem("registrationData");
-      if (reg) {
-        try {
-          const parsed = JSON.parse(reg);
-          if (parsed?.personalInfo) {
-            setStudentData(parsed as StudentData);
+      // Fallback: email (newest row)
+      if (!row && identity.email) {
+        row = await fetchByEmail(identity.email);
+        if (row) {
+          idUsed = row.id as string;
+          // cache id for subsequent loads
+          localStorage.setItem("registrationId", idUsed);
+          if (!localStorage.getItem("studentEmail") && row.email) {
+            localStorage.setItem("studentEmail", String(row.email).toLowerCase());
           }
-        } catch {
-          /* ignore */
         }
       }
 
-      // No row found -> send to login
+      // Fallback: cached data for display (won't unlock paid sections)
+      if (!row) {
+        const cached = localStorage.getItem("registrationData");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed?.personalInfo) {
+              setStudentData(parsed as StudentData);
+              setIsPaid(localStorage.getItem("isPaid") === "true");
+              setActiveTab("profile");
+              setNoRegistrationMsg(
+                "We couldn't find a registration in the database for your account. Showing cached details."
+              );
+              setIsLoading(false);
+              return { idUsed: null as string | null };
+            }
+          } catch {}
+        }
+      }
+
+      if (row) {
+        // normalize to UI shape
+        const client = toClientStudentData(row);
+        setStudentData(client);
+        const paid = !!row.is_paid;
+        setIsPaid(paid);
+        setActiveTab(paid ? "overview" : "profile");
+
+        // store for future
+        if (idUsed) localStorage.setItem("registrationId", idUsed);
+        if (row.email && !localStorage.getItem("studentEmail")) {
+          localStorage.setItem("studentEmail", String(row.email).toLowerCase());
+        }
+
+        setIsLoading(false);
+        return { idUsed };
+      }
+
+      // No id and no email or no row for email
+      setStudentData(null);
+      setIsPaid(false);
+      setActiveTab("profile");
+      setNoRegistrationMsg(
+        identity.email
+          ? `No registration found for ${identity.email}.`
+          : "No registration found for your account."
+      );
       setIsLoading(false);
-      window.location.href = "/login";
-      return null;
+      return { idUsed: null as string | null };
     } catch (e) {
+      console.error("Dashboard load error:", e);
+      setStudentData(null);
+      setIsPaid(false);
+      setActiveTab("profile");
+      setNoRegistrationMsg("Unable to load your registration right now.");
       setIsLoading(false);
-      window.location.href = "/login";
-      return null;
+      return { idUsed: null as string | null };
     }
   };
 
-  // Realtime listener for that registration row (so tabs unlock the moment is_paid flips)
+  // Realtime watch for is_paid flip
   const watchPaidStatus = async (registrationId: string) => {
     const channel = supabase
       .channel(`reg-${registrationId}`)
@@ -225,8 +309,7 @@ const StudentDashboard = () => {
       setActiveTab("profile");
       toast({
         title: "Payment Required",
-        description:
-          "Please complete your payment to access this section.",
+        description: "Please complete your payment to access this section.",
         variant: "destructive",
       });
       return;
@@ -234,30 +317,40 @@ const StudentDashboard = () => {
     setActiveTab(next);
   };
 
+  /** Robust Logout */
   const handleLogout = async () => {
-    localStorage.removeItem("studentLogin");
-    localStorage.removeItem("studentLoggedIn");
-    localStorage.removeItem("studentEmail");
-    // localStorage.removeItem("registrationId"); // optional: keep so dashboard can refetch later
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    window.location.href = "/login";
+    try {
+      await supabase.auth.signOut().catch(() => {});
+      [
+        "studentLogin",
+        "studentLoggedIn",
+        "studentEmail",
+        "registrationId",
+        "registrationData",
+        "isPaid",
+      ].forEach((k) => localStorage.removeItem(k));
+      if ((supabase as any).getChannels) {
+        (supabase as any).getChannels().forEach((ch: any) => supabase.removeChannel(ch));
+      }
+    } finally {
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
+      navigate("/login", { replace: true });
+    }
   };
+
+  const { startLoading: startL, stopLoading: stopL } = useLoadingContext();
 
   const handleDownload = (type: string) => {
     if (!isPaid) {
       setActiveTab("profile");
       toast({
         title: "Payment Required",
-        description:
-          "Please complete your payment before downloading documents.",
+        description: "Please complete your payment before downloading documents.",
         variant: "destructive",
       });
       return;
     }
-    startLoading(`Preparing your ${type} for download...`, "achievement");
+    startL(`Preparing your ${type} for download...`, "achievement");
     setTimeout(() => {
       stopLoading();
       toast({
@@ -270,13 +363,12 @@ const StudentDashboard = () => {
   const handlePasswordChange = () => {
     toast({
       title: "Password Change Request",
-      description:
-        "A password reset link has been sent to your registered email.",
+      description: "A password reset link has been sent to your registered email.",
     });
   };
 
   const handlePayNow = () => {
-    window.location.href = "/payment";
+    navigate("/payment");
   };
 
   if (isLoading) {
@@ -292,17 +384,22 @@ const StudentDashboard = () => {
 
   if (!studentData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">
-            Access Denied
-          </h1>
-          <p className="text-muted-foreground mb-4">
-            Please log in to access your dashboard.
-          </p>
-          <Button onClick={() => (window.location.href = "/login")}>
-            Go to Login
-          </Button>
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">No Registration Found</h1>
+          {noRegistrationMsg ? (
+            <p className="text-muted-foreground mb-6">{noRegistrationMsg}</p>
+          ) : (
+            <p className="text-muted-foreground mb-6">
+              We couldn’t find your registration. Please make sure you have registered, or try logging in again.
+            </p>
+          )}
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => navigate("/login", { replace: true })}>Login</Button>
+            <Button variant="outline" onClick={() => navigate("/registration")}>
+              New Registration
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -330,20 +427,15 @@ const StudentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">
-                Welcome, {name}
-              </h1>
-              <p className="text-white/90">
-                Student Dashboard - NTExam Navoday Talent Exam
-              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Welcome, {name}</h1>
+              <p className="text-white/90">Student Dashboard - NTExam Navoday Talent Exam</p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={async () => {
-                  const id = localStorage.getItem("registrationId");
-                  await loadFromDB();
-                  if (id) {
+                  const loaded = await loadFromDB();
+                  if (loaded?.idUsed) {
                     toast({ title: "Status refreshed" });
                   }
                 }}
@@ -366,56 +458,48 @@ const StudentDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Heads-up if showing cached-only data */}
+        {noRegistrationMsg && (
+          <div className="mb-6 rounded-lg border border-primary/30 bg-primary/10 p-4 flex items-start gap-3">
+            <Info className="h-5 w-5 text-primary mt-0.5" />
+            <div className="flex-1">
+              <div className="font-semibold text-foreground">Heads up</div>
+              <div className="text-sm text-muted-foreground">{noRegistrationMsg}</div>
+            </div>
+          </div>
+        )}
+
         {/* Unpaid banner */}
         {!isPaid && (
           <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 p-4 flex items-start gap-3">
             <ShieldAlert className="h-5 w-5 text-warning mt-0.5" />
             <div className="flex-1">
-              <div className="font-semibold text-foreground">
-                Payment Pending
-              </div>
+              <div className="font-semibold text-foreground">Payment Pending</div>
               <div className="text-sm text-muted-foreground">
-                Your account is limited until your exam fee is paid. Complete
-                payment to unlock all sections.
+                Your account is limited until your exam fee is paid. Complete payment to unlock all sections.
               </div>
             </div>
-            <Button
-              onClick={handlePayNow}
-              className="bg-gradient-success text-success-foreground"
-            >
+            <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
               Pay Now
             </Button>
           </div>
         )}
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => handleTabChange(v as any)}
-          className="space-y-6"
-        >
+        <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as any)} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger
-              value="overview"
-              onClick={(e) => !isPaid && e.preventDefault()}
-            >
+            <TabsTrigger value="overview" onClick={(e) => !isPaid && e.preventDefault()}>
               {lockIfUnpaid("Overview")}
             </TabsTrigger>
-            <TabsTrigger
-              value="documents"
-              onClick={(e) => !isPaid && e.preventDefault()}
-            >
+            <TabsTrigger value="documents" onClick={(e) => !isPaid && e.preventDefault()}>
               {lockIfUnpaid("Documents")}
             </TabsTrigger>
-            <TabsTrigger
-              value="exams"
-              onClick={(e) => !isPaid && e.preventDefault()}
-            >
+            <TabsTrigger value="exams" onClick={(e) => !isPaid && e.preventDefault()}>
               {lockIfUnpaid("Exams")}
             </TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab (LOCKED until paid) */}
+          {/* Overview */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Downloads */}
@@ -467,18 +551,11 @@ const StudentDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="text-center">
-                    <Badge
-                      variant="secondary"
-                      className="bg-success/10 text-success mb-2"
-                    >
+                    <Badge variant="secondary" className="bg-success/10 text-success mb-2">
                       {isPaid ? "Paid" : "Registered"}
                     </Badge>
-                    <p className="text-sm text-muted-foreground">
-                      {classGrade} Exam
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {examDate}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{classGrade} Exam</p>
+                    <p className="text-xs text-muted-foreground mt-1">{examDate}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -494,9 +571,7 @@ const StudentDashboard = () => {
                 <CardContent>
                   <div className="flex flex-wrap gap-1">
                     {subjects.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">
-                        No subjects selected
-                      </span>
+                      <span className="text-xs text-muted-foreground">No subjects selected</span>
                     ) : (
                       subjects.map((subject, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
@@ -528,9 +603,7 @@ const StudentDashboard = () => {
             {/* Recent Activity */}
             <Card className="shadow-card bg-gradient-card border-0">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-foreground">
-                  Recent Activity
-                </CardTitle>
+                <CardTitle className="text-xl font-bold text-foreground">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -539,9 +612,7 @@ const StudentDashboard = () => {
                       <FileText className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">
-                        Registration Completed
-                      </p>
+                      <p className="font-medium text-foreground">Registration Completed</p>
                       <p className="text-sm text-muted-foreground">
                         Successfully registered for {classGrade} exam
                       </p>
@@ -567,7 +638,7 @@ const StudentDashboard = () => {
             </Card>
           </TabsContent>
 
-          {/* Documents Tab (LOCKED until paid) */}
+          {/* Documents */}
           <TabsContent value="documents" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card className="shadow-card bg-gradient-card border-0">
@@ -635,7 +706,7 @@ const StudentDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Exams Tab (LOCKED until paid) */}
+          {/* Exams */}
           <TabsContent value="exams" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="shadow-card bg-gradient-success border-0 text-success-foreground">
@@ -656,8 +727,7 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description:
-                            "Please complete your payment to access the exam.",
+                          description: "Please complete your payment to access the exam.",
                           variant: "destructive",
                         });
                         return;
@@ -693,8 +763,7 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description:
-                            "Please complete your payment to access mock tests.",
+                          description: "Please complete your payment to access mock tests.",
                           variant: "destructive",
                         });
                         return;
@@ -725,8 +794,7 @@ const StudentDashboard = () => {
                         setActiveTab("profile");
                         toast({
                           title: "Payment Required",
-                          description:
-                            "Please complete your payment to access syllabus.",
+                          description: "Please complete your payment to access syllabus.",
                           variant: "destructive",
                         });
                         return;
@@ -741,7 +809,7 @@ const StudentDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Profile Tab (Always accessible) */}
+          {/* Profile (always accessible) */}
           <TabsContent value="profile" className="space-y-6">
             {!isPaid && (
               <Card className="shadow-card border border-warning/30 bg-warning/10">
@@ -755,10 +823,7 @@ const StudentDashboard = () => {
                   <p className="text-sm text-muted-foreground">
                     Your profile is active, but other sections are locked. Pay now to unlock everything.
                   </p>
-                  <Button
-                    onClick={handlePayNow}
-                    className="bg-gradient-success text-success-foreground"
-                  >
+                  <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
                     Pay Now
                   </Button>
                 </CardContent>
@@ -780,11 +845,9 @@ const StudentDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Personal Information */}
+                  {/* Personal */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">
-                      Personal Information
-                    </h3>
+                    <h3 className="font-semibold text-foreground">Personal Information</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
@@ -799,9 +862,7 @@ const StudentDashboard = () => {
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Gender:</span>
-                        <span className="capitalize">
-                          {studentData?.personalInfo?.gender ?? ""}
-                        </span>
+                        <span className="capitalize">{studentData?.personalInfo?.gender ?? ""}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -811,21 +872,15 @@ const StudentDashboard = () => {
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Phone:</span>
-                        <span>
-                          {studentData?.personalInfo?.contactNumber ?? ""}
-                        </span>
+                        <span>{studentData?.personalInfo?.contactNumber ?? ""}</span>
                       </div>
                       <div className="flex items-start gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <span className="font-medium">Address:</span>
                         <span>
                           {studentData?.personalInfo?.address ?? ""}
-                          {studentData?.personalInfo?.city
-                            ? `, ${studentData.personalInfo.city}`
-                            : ""}
-                          {studentData?.personalInfo?.state
-                            ? `, ${studentData.personalInfo.state}`
-                            : ""}
+                          {studentData?.personalInfo?.city ? `, ${studentData.personalInfo.city}` : ""}
+                          {studentData?.personalInfo?.state ? `, ${studentData.personalInfo.state}` : ""}
                           {studentData?.personalInfo?.postalCode
                             ? ` - ${studentData.personalInfo.postalCode}`
                             : ""}
@@ -834,11 +889,9 @@ const StudentDashboard = () => {
                     </div>
                   </div>
 
-                  {/* School Information */}
+                  {/* School */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-foreground">
-                      School Information
-                    </h3>
+                    <h3 className="font-semibold text-foreground">School Information</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <School className="h-4 w-4 text-muted-foreground" />
@@ -876,9 +929,7 @@ const StudentDashboard = () => {
 
                 {/* Account Settings */}
                 <div className="mt-8 pt-6 border-t">
-                  <h3 className="font-semibold text-foreground mb-4">
-                    Account Settings
-                  </h3>
+                  <h3 className="font-semibold text-foreground mb-4">Account Settings</h3>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button variant="outline" onClick={handlePasswordChange}>
                       <Lock className="h-4 w-4 mr-2" />
@@ -889,10 +940,7 @@ const StudentDashboard = () => {
                       Logout
                     </Button>
                     {!isPaid && (
-                      <Button
-                        onClick={handlePayNow}
-                        className="bg-gradient-success text-success-foreground"
-                      >
+                      <Button onClick={handlePayNow} className="bg-gradient-success text-success-foreground">
                         Pay Now
                       </Button>
                     )}

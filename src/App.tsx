@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingProvider from "@/context/LoadingContext";
+import ShippingPolicy from "@/pages/ShippingPolicy";
 
 // Public pages
 import Index from "./pages/Index";
@@ -49,6 +50,8 @@ const App = () => (
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/cancellation-refund" element={<CancellationRefund />} />
             <Route path="/gallery" element={<Gallery />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
+
 
             {/* Admin routes */}
             <Route
